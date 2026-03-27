@@ -40,7 +40,7 @@ fprintf('Нормы невязки для системы с возмущения
 
 
 %% Сравнение решений
-delta = x_pert - x;
+delta = x_p - x;
 abs_err = abs(delta);
 rel_err = abs(delta ./ x);  % предполагаем, что x не содержит нулей
 
