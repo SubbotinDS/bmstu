@@ -40,22 +40,36 @@ fprintf('Нормы невязки для системы с возмущения
 
 
 %% Сравнение решений
-delta = x_p - x;
-abs_err = abs(delta);
-rel_err = abs(delta ./ x);  % предполагаем, что x не содержит нулей
+% delta = x_p - x;
+% abs_err = abs(delta);
+% rel_err = abs(delta ./ x);  % предполагаем, что x не содержит нулей
+% 
+% disp('--------------------------- Сравнение решений ---------------------------');
+% fprintf('Разность (возмущённое – исходное):\n');    disp(delta);
+% fprintf('Абсолютная погрешность:\n');               disp(abs_err);
+% fprintf('Относительная погрешность:\n');            disp(rel_err);
+
+x1_abs_err1 = norm(x - x_p,1);
+x1_abs_errInf = norm(x - x_p,inf);
+
+x1_rel_err1 = x1_abs_err1 / norm(x,1);
+x1_rel_errInf = x1_abs_errInf / norm(x,inf);
 
 disp('--------------------------- Сравнение решений ---------------------------');
-fprintf('Разность (возмущённое – исходное):\n');    disp(delta);
-fprintf('Абсолютная погрешность:\n');               disp(abs_err);
-fprintf('Относительная погрешность:\n');            disp(rel_err);
-
+fprintf('Абсолютная погрешность:\n');               disp(x1_abs_err1); disp(x1_abs_errInf);
+fprintf('Относительная погрешность:\n');            disp(x1_rel_err1); disp(x1_rel_errInf);
 
 %% функция проверки
 function is_ok = progonka_valid(a, b, c)
     % Проверка строгого диагонального преобладания для трёхдиагональной матрицы
     n = length(b);
     sums = [abs(c(1)); abs(a(1:n-2)) + abs(c(2:n-1)); abs(a(n-1))];
-    is_ok = all(abs(b) > sums);
+
+    % Условия
+    cond1 = all(abs(b) >= sums);      % нестрогое
+    cond2 = any(abs(b) > sums);       % хотя бы одно строгое
+
+    is_ok = cond1 && cond2;
 
     if is_ok
         disp('Условие выполнено');
