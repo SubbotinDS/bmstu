@@ -18,7 +18,7 @@ disp([A d]);
 
 %% Без возмущений
 disp('---------------------------Прогонка для исходных данных:---------------------------');
-x = progonka(a, b, c, d);
+x = Progonka(a, b, c, d);
 
 % Нормы невязки
 r = d - A * x;
@@ -32,7 +32,7 @@ d_pert(1) = d(1) + 0.01;
 d_pert(2) = d(2) - 0.01;
 d_pert(3) = d(3) + 0.01;
 
-x_p = progonka(a, b, c, d_pert);
+x_p = Progonka(a, b, c, d_pert);
 
 % Нормы невязок с возмущениями
 r_p = d_pert - A * x_p;
@@ -78,7 +78,7 @@ function is_ok = progonka_valid(a, b, c)
     end
 end
 %% функция прогонки
-function x = progonka(a, b, c, d)
+function x = Progonka(a, b, c, d)
     n = length(d);
 
     if ~progonka_valid(a, b, c)
