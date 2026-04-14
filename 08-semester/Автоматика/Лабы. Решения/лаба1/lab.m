@@ -55,7 +55,7 @@ overshoot = step_info.Overshoot;      % перерегулирование, %
 peak = step_info.Peak;                % максимальное значение
 final_value = dcgain(W);              % установившееся значение
 
-fprintf('\n=== Показатели качества переходного процесса ===\n');
+fprintf('\n Показатели качества переходного процесса\n');
 fprintf('Время нарастания (10-90%%):        t_rise = %.4f c\n', t_rise);
 fprintf('Время переходного процесса (2%%):  t_settle = %.4f c\n', t_settle);
 fprintf('Перерегулирование:                 σ = %.2f %%\n', overshoot);
