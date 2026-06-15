@@ -1,58 +1,49 @@
 clc, clear, close all
 
 % Передаточная функция разомкнутой системы
-w = tf([1], [0.05, 0.1, 1, 1, 1]);
+num = 1;
+den = [0.05, 0.1, 1, 1, 1];
+W = tf(num, den);
 
-T = feedback(w, 1)   % замкнутая система (единичная ОС)
+% График переходного процесса (ступенчатое воздействие) разомкнутой системы
+figure;
+t = 0:0.1:20;
+step(W, t);
+grid on;
+title('Переходный процесс разомкнутой системы');
 
-if isstable(T)
-    fprintf('Замкнутая система УСТОЙЧИВА\n');
-else
-    fprintf('Замкнутая система НЕУСТОЙЧИВА\n');
-end
+% 1. Автоматическое построение годографа Найквиста
+figure;
+nyquist(W);
+grid on;
+title('Автоматическое построение годографа Найквиста (разомкнутая система)');
+
+% 2. Ручное построение годографа Найквиста
+w = logspace(-2, 2, 1000);
+[re, im] = nyquist(W, w);
+re = squeeze(re);
+im = squeeze(im);
 
 figure;
-step(w);
-title('Переходная функция разомкнутой системы');
+plot(re, im, 'b-', 'LineWidth', 1.5);
+hold on;
+plot(-1, 0, 'ro', 'MarkerSize', 8, 'LineWidth', 2);
+plot([-2, 2], [0, 0], 'k--');
+plot([0, 0], [-2, 2], 'k--');
+axis equal;
 grid on;
+title('Ручное построение годографа Найквиста (разомкнутая система)');
+xlabel('Re');
+ylabel('Im');
+legend('W(j\omega)', '(-1,0)');
 
-% Построение годографа по расчетам
-MAT = [ 0.1     1       0       0
-        0.05    1       0       0
-        0       0.1     1       0
-        0       0.05    1       0 ];
-det([0.1     1       
-     0.05    1])
-det([0.1     1      0       
-     0.05    1      0 
-     0       0.1    1])
-det(MAT)
+% 3. Переходный процесс замкнутой системы (единичная отрицательная обратная связь)
+% Замкнутая система: Ф(s) = W(s) / (1 + W(s))
+W_cl = feedback(W, 1);
 
-
-syms w
-A = 0.05 * w^4 - w^2 + 1;
-B = w - 0.1 * w^3;
-P = A / (A^2 + B^2)
-Q = -B / (A^2 + B^2)
-
-subs(P, w, 0)
-subs(Q, w, 0)
-format short
-w1 = round(double(solve(P == 0, w)), 2)
-Im = round(double(subs(Q, w1)), 4)
-
-w2 = round(double(solve(Q == 0, w)), 2)
-Re = round(double(subs(P, w2)), 4)
-
-P = [1 0        -0.2500 0      0];
-Q = [0 -1.0861  0       0.2576 0];
-
-t = 1:length(P);                 
-tt = linspace(1, length(P), 100); 
-
-P_smooth = interp1(t, P, tt, 'spline');
-Q_smooth = interp1(t, Q, tt, 'spline');
-
-figure
-plot(P_smooth, Q_smooth, '-', P, Q, 'o', -1, 0, '*')
-grid on
+figure;
+step(W_cl, t);
+grid on;
+title('Переходный процесс замкнутой системы');
+xlabel('Время, с');
+ylabel('Амплитуда');
