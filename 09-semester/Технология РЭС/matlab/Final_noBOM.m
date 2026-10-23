@@ -26,11 +26,11 @@ function s=default_structure()
             50 0 7 0;
             50 0 20 0;
             50 0 400 0],...
-           [0;0;3;3;100;0;0.4;0.8;100;0;1;1000;300],...
+           [0;0;3;3;100;0;0;0.71;100;0;1;1000;300],...
            '');
 end
 
-% --- Р’СЃРїРѕРјРѕРіР°С‚РµР»СЊРЅС‹Рµ С„СѓРЅРєС†РёРё СЃРѕРїСЂРѕРІРѕР¶РґРµРЅРёСЏ РјР°СЃСЃРёРІР° strd ---
+% --- Вспомогательные функции сопровождения массива strd ---
 function align_strd()
     while numel(strd) < numel(strc)
         strd{end+1} = [];
@@ -55,7 +55,7 @@ function invalidate_vac(idx)
     end
 end
 
-% РџР РРќРЈР”РРўР•Р›Р¬РќРђРЇ РЎРРќРҐР РћРќРР—РђР¦РРЇ Р”РђРќРќР«РҐ РР— РўРђР‘Р›РР¦
+% ПРИНУДИТЕЛЬНАЯ СИНХРОНИЗАЦИЯ ДАННЫХ ИЗ ТАБЛИЦ
 function sync_table_data()
     strc{inds}.hst = get(hw149, 'data');
     strc{inds}.par = get(hw140, 'data');
@@ -76,14 +76,14 @@ function pl_vac()
         delete(axs(Is));
     end
     axs=[];
-    % РџРµСЂРёРѕРґС‹ РѕРїСЂРµРґРµР»СЏРµРј РїРѕ С‚Р°Р±Р»РёС†Рµ СЂРµР¶РёРјРѕРІ
+    % Периоды определяем по таблице режимов
     rpr_tab = get(hw111,'data')';
     if isempty(rpr_tab)
         Na_regime = 1;
     else
         Na_regime = size(rpr_tab,2)+1;
     end
-    % РРЅРґРµРєСЃС‹ СЃС‚СЂСѓРєС‚СѓСЂ, Сѓ РєРѕС‚РѕСЂС‹С… РµСЃС‚СЊ Р’РђРҐ
+    % Индексы структур, у которых есть ВАХ
     valid_idx = [];
     for Is=1:length(strc)
         if Is<=numel(strd) && ~isempty(strd{Is})
@@ -111,10 +111,10 @@ function pl_vac()
     set(hw22,'Max',max(0,Na-2),'Value',0);
     for It=1:Na
         ha=axes('Parent',hw2,'Position',[.07+.5*(It-1) .2 .4 .6]);
-            xlabel(ha,'РќР°РїСЂСЏР¶РµРЅРёРµ, Р’');
-            ylabel(ha,'РџР»РѕС‚РЅРѕСЃС‚СЊ С‚РѕРєР°, Рђ/Рј^2');
+            xlabel(ha,'Напряжение, В');
+            ylabel(ha,'Плотность тока, А/м^2');
             grid on; grid minor;
-            title(ha,['РџРµСЂРёРѕРґ:' num2str(It-1)]);
+            title(ha,['Период:' num2str(It-1)]);
         hold on;
         names_plot = {};
         for k=1:Nl
@@ -155,10 +155,10 @@ function cb_news(src,event)
     nums=nums+1;
     hstr=get(hw143,'String');
     if ~iscell(hstr), hstr={hstr}; end
-    hstr(length(hstr)+1)={['РЎС‚СЂСѓРєС‚СѓСЂР° ',num2str(nums)]};
+    hstr(length(hstr)+1)={['Структура ',num2str(nums)]};
     set(hw143,'String',hstr,'Value',length(hstr));
     s=default_structure();
-    s.Name=['РЎС‚СЂСѓРєС‚СѓСЂР° ',num2str(nums)];
+    s.Name=['Структура ',num2str(nums)];
     strc(length(strc)+1)={s};
     strd{length(strc)} = [];
     inds=length(strc);
@@ -171,7 +171,7 @@ function cb_cops(src,event)
     if isscalar(strc)
         set(hw146,'Enable','on');
     end
-    nm=[strc{inds}.Name,'_РєРѕРїРёСЏ'];
+    nm=[strc{inds}.Name,'_копия'];
     hstr=get(hw143,'String');
     if ~iscell(hstr), hstr={hstr}; end
     hstr=hstr([1:inds,inds:end]);
@@ -179,7 +179,7 @@ function cb_cops(src,event)
     set(hw143,'String',hstr,'Value',inds+1);
     strc=strc([1:inds,inds:end]);
     strc{inds+1}.Name=nm;
-    strd=strd([1:inds,inds:end]);   % РєРѕРїРёСЏ РїРѕР»СѓС‡Р°РµС‚ С‚Сѓ Р¶Рµ Р’РђРҐ
+    strd=strd([1:inds,inds:end]);   % копия получает ту же ВАХ
     inds=inds+1;
     dstr(strc{inds});
 end
@@ -205,7 +205,7 @@ end
 function cb_nnms(src,event)
     sync_table_data();
     cur_name = strc{inds}.Name;
-    nm = inputdlg('Р’РІРµРґРёС‚Рµ РЅР°Р·РІР°РЅРёРµ', 'РџРµСЂРµРёРјРµРЅРѕРІР°РЅРёРµ СЃС‚СЂСѓРєС‚СѓСЂС‹', [1 50], {cur_name});
+    nm = inputdlg('Введите название', 'Переименование структуры', [1 50], {cur_name});
     if isempty(nm), return; end
     nm = strtrim(nm{1});
     if isempty(nm), return; end
@@ -237,16 +237,16 @@ function cb_par(src,event)
 end
     
 function cb_chs(src,event)
-    sync_table_data(); % Р¤РёРєСЃРёСЂСѓРµРј РґР°РЅРЅС‹Рµ РІ СЃС‚Р°СЂРѕР№ СЃС‚СЂСѓРєС‚СѓСЂРµ РїРµСЂРµРґ РїРµСЂРµРєР»СЋС‡РµРЅРёРµРј
+    sync_table_data(); % Фиксируем данные в старой структуре перед переключением
     inds=get(hw143,'Value');
     dstr(strc{inds});
 end
 
 function cb_addr(src,event)
     hsd=get(hw111,'data');
-    hsd=[hsd;{1, 'РіРѕРґ' ,1, 300}];
+    hsd=[hsd;{1, 'год' ,1, 300}];
     set(hw111,'data',hsd);
-    invalidate_vac();   % СЂРµР¶РёРјС‹ РёР·РјРµРЅРёР»РёСЃСЊ вЂ” РІСЃРµ Р’РђРҐ РЅРµРґРµР№СЃС‚РІРёС‚РµР»СЊРЅС‹
+    invalidate_vac();   % режимы изменились — все ВАХ недействительны
 end
 
 function cb_delr(src,event)
@@ -256,7 +256,7 @@ function cb_delr(src,event)
     invalidate_vac();
 end
 
-% Р РµРґР°РєС‚РёСЂРѕРІР°РЅРёРµ С‚Р°Р±Р»РёС† СЂРµР¶РёРјРѕРІ/РёРЅС‚РµРіСЂРёСЂРѕРІР°РЅРёСЏ РІСЂСѓС‡РЅСѓСЋ
+% Редактирование таблиц режимов/интегрирования вручную
 function cb_regime_edit(~,~)
     invalidate_vac();
 end
@@ -282,15 +282,15 @@ function cb_calc(src,event)
         rpr=cell2mat(rpr([1,3,4],:));
         for Iet=1:length(et)
             switch et{Iet}
-                case 'СЃ'
+                case 'с'
                     et{Iet}=1;
-                case 'РјРёРЅ'
+                case 'мин'
                     et{Iet}=60;
-                case 'С‡Р°СЃ'
+                case 'час'
                     et{Iet}=360;
-                case 'СЃСѓС‚РєРё'
+                case 'сутки'
                     et{Iet}=8640;
-                case 'РіРѕРґ'
+                case 'год'
                     et{Iet}=3153600;
             end
         end
@@ -300,7 +300,7 @@ function cb_calc(src,event)
     n_new=0;
     for Ihst=1:length(strc)
         if ~isempty(strd{Ihst})
-            continue;   % СѓР¶Рµ СЂР°СЃСЃС‡РёС‚Р°РЅРѕ вЂ” РѕСЃС‚Р°РІР»СЏРµРј РєР°Рє РµСЃС‚СЊ
+            continue;   % уже рассчитано — оставляем как есть
         end
         hstnm=strc{Ihst}.Name;
         hst=strc{Ihst}.hst';
@@ -317,10 +317,10 @@ function cb_calc(src,event)
     pl_vac();
     set(hw,'SelectedTab',hw2);
     if n_new==0
-        set(ht1,'String','Р’СЃРµ СЃС‚СЂСѓРєС‚СѓСЂС‹ СѓР¶Рµ СЂР°СЃСЃС‡РёС‚Р°РЅС‹. РќРёС‡РµРіРѕ РЅРµ РїРµСЂРµСЃС‡РёС‚С‹РІР°Р»РѕСЃСЊ.');
+        set(ht1,'String','Все структуры уже рассчитаны. Ничего не пересчитывалось.');
     else
-        set(ht1,'String',['Р Р°СЃС‡С‘С‚ Р·Р°РєРѕРЅС‡РµРЅ. РџРµСЂРµСЃС‡РёС‚Р°РЅРѕ СЃС‚СЂСѓРєС‚СѓСЂ: ',num2str(n_new), ...
-                          ', СЃСѓРјРјР°СЂРЅРѕРµ РІСЂРµРјСЏ - ',num2str(ts),' c']);
+        set(ht1,'String',['Расчёт закончен. Пересчитано структур: ',num2str(n_new), ...
+                          ', суммарное время - ',num2str(ts),' c']);
     end
 end
 
@@ -336,9 +336,9 @@ end
 function cb_bvac(src,event)
     kvac=~kvac;
     if kvac
-        set(src,'String','РџРѕ РІСЂРµРјРµРЅРё');
+        set(src,'String','По времени');
     else
-        set(src,'String','РџРѕ СЃС‚СЂСѓРєС‚СѓСЂР°Рј');
+        set(src,'String','По структурам');
     end
     pl_vac(kvac);
 end
@@ -366,7 +366,7 @@ end
 function [V_u,J_u]=sens_curve(Vs_s,Js_s,period_s)
     col_s=period_s+1;
     if col_s<1 || col_s>size(Vs_s,2)
-        error('РџРµСЂРёРѕРґ %d РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚. Р”РѕСЃС‚СѓРїРЅС‹ РїРµСЂРёРѕРґС‹ 0...%d.',period_s,size(Vs_s,2)-1);
+        error('Период %d отсутствует. Доступны периоды 0...%d.',period_s,size(Vs_s,2)-1);
     end
     V_u=Vs_s(:,col_s);
     J_u=Js_s(:,col_s);
@@ -378,14 +378,14 @@ function [V_u,J_u]=sens_curve(Vs_s,Js_s,period_s)
     [V_u,ia]=unique(V_u,'stable');
     J_u=J_u(ia);
     if numel(V_u)<2
-        error('РќРµРґРѕСЃС‚Р°С‚РѕС‡РЅРѕ С‚РѕС‡РµРє Р’РђРҐ РґР»СЏ СЂР°СЃС‡С‘С‚Р° С‡СѓРІСЃС‚РІРёС‚РµР»СЊРЅРѕСЃС‚Рё.');
+        error('Недостаточно точек ВАХ для расчёта чувствительности.');
     end
 end
 
 function Jv=sens_J_at_voltage(Vs_s,Js_s,period_s,Vwork)
     [V_u,J_u]=sens_curve(Vs_s,Js_s,period_s);
     if Vwork<min(V_u) || Vwork>max(V_u)
-        error('РќР°РїСЂСЏР¶РµРЅРёРµ V0=%.6g Р’ РІРЅРµ СЂР°СЃСЃС‡РёС‚Р°РЅРЅРѕРіРѕ РґРёР°РїР°Р·РѕРЅР° Р’РђРҐ %.6g...%.6g Р’.', ...
+        error('Напряжение V0=%.6g В вне рассчитанного диапазона ВАХ %.6g...%.6g В.', ...
               Vwork,min(V_u),max(V_u));
     end
     Jv=interp1(V_u,J_u,Vwork,'pchip');
@@ -398,7 +398,7 @@ end
 
 function check_baseline_ready()
     if isempty(strd) || numel(strd)<inds || isempty(strd{inds})
-        error('РЎРЅР°С‡Р°Р»Р° РЅР°Р¶РјРёС‚Рµ В«РЎС‚Р°СЂС‚В», С‡С‚РѕР±С‹ РёСЃС…РѕРґРЅР°СЏ РїСЂРѕРіСЂР°РјРјР° СЂР°СЃСЃС‡РёС‚Р°Р»Р° Р’РђРҐ С‚РµРєСѓС‰РµР№ СЃС‚СЂСѓРєС‚СѓСЂС‹.');
+        error('Сначала нажмите «Старт», чтобы исходная программа рассчитала ВАХ текущей структуры.');
     end
 end
 
@@ -426,42 +426,42 @@ function cb_sens_calc(~,~)
 
         Vwork=str2double(get(hs_v0,'String'));
         if ~isfinite(Vwork)
-            error('Р’РІРµРґРёС‚Рµ РєРѕСЂСЂРµРєС‚РЅРѕРµ СЂР°Р±РѕС‡РµРµ РЅР°РїСЂСЏР¶РµРЅРёРµ V0.');
+            error('Введите корректное рабочее напряжение V0.');
         end
 
         pct=str2double(get(hs_delta,'String'));
         if ~isfinite(pct) || pct<=0 || pct>=50
-            error('О” РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ Р±РѕР»СЊС€Рµ 0 Рё РјРµРЅСЊС€Рµ 50%%. Р”Р»СЏ РїСЂРѕРёР·РІРѕРґРЅРѕР№ РѕР±С‹С‡РЅРѕ РґРѕСЃС‚Р°С‚РѕС‡РЅРѕ 0.1...2%%.');
+            error('? должно быть больше 0 и меньше 50%%. Для производной обычно достаточно 0.1...2%%.');
         end
         h=pct/100;
 
         period_s=round(str2double(get(hs_period,'String')));
         if ~isfinite(period_s) || period_s<0
-            error('РџРµСЂРёРѕРґ РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ С†РµР»С‹Рј РЅРµРѕС‚СЂРёС†Р°С‚РµР»СЊРЅС‹Рј С‡РёСЃР»РѕРј.');
+            error('Период должен быть целым неотрицательным числом.');
         end
 
         hst0=strc{inds}.hst;
         par0=strc{inds}.par;
 
         if any(hst0(:,2)<0) || any(hst0(:,2)>1)
-            error('Р”РѕР»СЏ Al РґРѕР»Р¶РЅР° РЅР°С…РѕРґРёС‚СЊСЃСЏ РІ РґРёР°РїР°Р·РѕРЅРµ РѕС‚ 0 РґРѕ 1 РІРѕ РІСЃРµС… СЃР»РѕСЏС….');
+            error('Доля Al должна находиться в диапазоне от 0 до 1 во всех слоях.');
         end
 
         Vs0=strd{inds}{2};
         Js0=strd{inds}{3};
         [Vbase,Jbase]=sens_curve(Vs0,Js0,period_s);
         if Vwork<min(Vbase) || Vwork>max(Vbase)
-            error('V0=%.6g Р’ РІРЅРµ Р±Р°Р·РѕРІРѕР№ Р’РђРҐ %.6g...%.6g Р’.',Vwork,min(Vbase),max(Vbase));
+            error('V0=%.6g В вне базовой ВАХ %.6g...%.6g В.',Vwork,min(Vbase),max(Vbase));
         end
         J0=interp1(Vbase,Jbase,Vwork,'pchip');
         Jscale=max(abs(Jbase));
         if ~isfinite(J0) || abs(J0)<=max(1E-30,Jscale*1E-12)
-            error('РџСЂРё V0=%.6g Р’ Р±Р°Р·РѕРІС‹Р№ С‚РѕРє СЃР»РёС€РєРѕРј Р±Р»РёР·РѕРє Рє РЅСѓР»СЋ. Р¤РѕСЂРјСѓР»Р° K=(dJ/dX)*X0/J0 СЃС‚Р°РЅРѕРІРёС‚СЃСЏ РЅРµСѓСЃС‚РѕР№С‡РёРІРѕР№. Р’С‹Р±РµСЂРёС‚Рµ РґСЂСѓРіРѕРµ V0.',Vwork);
+            error('При V0=%.6g В базовый ток слишком близок к нулю. Формула K=(dJ/dX)*X0/J0 становится неустойчивой. Выберите другое V0.',Vwork);
         end
 
-        names={'РўРµРјРїРµСЂР°С‚СѓСЂР° T'; ...
-               'РЁРёСЂРёРЅР° (С‚РѕР»С‰РёРЅС‹ РІСЃРµС… СЃР»РѕС‘РІ) d_i'; ...
-               'Р”РѕР»СЏ Al РІРѕ РІСЃРµС… СЃР»РѕСЏС… x_i'};
+        names={'Температура T'; ...
+               'Ширина (толщины всех слоёв) d_i'; ...
+               'Доля Al во всех слоях x_i'};
         Kvals=NaN(3,1);
         methods=cell(3,1);
         bases=cell(3,1);
@@ -470,64 +470,64 @@ function cb_sens_calc(~,~)
         T0=par0(13);
         dT=T0*h;
         if ~isfinite(T0) || T0<=0 || T0-dT<=0
-            error('РўРµРєСѓС‰Р°СЏ С‚РµРјРїРµСЂР°С‚СѓСЂР° РґРѕР»Р¶РЅР° Р±С‹С‚СЊ РїРѕР»РѕР¶РёС‚РµР»СЊРЅРѕР№ Рё РґРѕРїСѓСЃРєР°С‚СЊ СѓРјРµРЅСЊС€РµРЅРёРµ РЅР° Р·Р°РґР°РЅРЅС‹Р№ О”.');
+            error('Текущая температура должна быть положительной и допускать уменьшение на заданный ?.');
         end
         pm=par0; pp=par0;
         pm(13)=T0-dT;
         pp(13)=T0+dT;
-        set(hs_status,'String',sprintf('1/3: С‚РµРјРїРµСЂР°С‚СѓСЂР° %.6g K, V0=%.6g Р’...',T0,Vwork)); drawnow;
+        set(hs_status,'String',sprintf('1/3: температура %.6g K, V0=%.6g В...',T0,Vwork)); drawnow;
         Jm=run_sens_point(hst0,pm,'sens T-',period_s,Vwork);
         Jp=run_sens_point(hst0,pp,'sens T+',period_s,Vwork);
         dJdT=(Jp-Jm)/(2*dT);
         Kvals(1)=dJdT*T0/J0;
-        methods{1}='С†РµРЅС‚СЂР°Р»СЊРЅР°СЏ СЂР°Р·РЅРѕСЃС‚СЊ';
+        methods{1}='центральная разность';
         bases{1}=sprintf('T0 = %.6g K',T0);
         steps{1}=sprintf('%.6g K (%.4g%%)',dT,pct);
         hm=hst0; hp=hst0;
         hm(:,1)=hst0(:,1)*(1-h);
         hp(:,1)=hst0(:,1)*(1+h);
-        set(hs_status,'String',sprintf('2/3: С€РёСЂРёРЅР° (С‚РѕР»С‰РёРЅС‹ РІСЃРµС… СЃР»РѕС‘РІ), V0=%.6g Р’...',Vwork)); drawnow;
+        set(hs_status,'String',sprintf('2/3: ширина (толщины всех слоёв), V0=%.6g В...',Vwork)); drawnow;
         Jm=run_sens_point(hm,par0,'sens d-',period_s,Vwork);
         Jp=run_sens_point(hp,par0,'sens d+',period_s,Vwork);
         dJda=(Jp-Jm)/(2*h);
         Kvals(2)=dJda/J0;
-        methods{2}='С†РµРЅС‚СЂР°Р»СЊРЅР°СЏ; РІСЃРµ d_i РѕРґРЅРѕРІСЂРµРјРµРЅРЅРѕ';
-        bases{2}=vec_text(hst0(:,1),'РЅРј');
-        steps{2}=sprintf('В± %.4g%% РґР»СЏ РєР°Р¶РґРѕРіРѕ d_i',pct);
+        methods{2}='центральная; все d_i одновременно';
+        bases{2}=vec_text(hst0(:,1),'нм');
+        steps{2}=sprintf('± %.4g%% для каждого d_i',pct);
 
         x0=hst0(:,2);
         bases{3}=vec_text(x0,'');
         if all(abs(x0)<1E-15)
             Kvals(3)=0;
-            methods{3}='РІСЃРµ x_i=0; РјР°СЃС€С‚Р°Р±РёСЂРѕРІР°РЅРёРµ РЅРµ РјРµРЅСЏРµС‚ СЃС‚СЂСѓРєС‚СѓСЂСѓ';
+            methods{3}='все x_i=0; масштабирование не меняет структуру';
             steps{3}=sprintf('%.4g%%',pct);
         elseif all(x0*(1+h)<=1+1E-12)
             hm=hst0; hp=hst0;
             hm(:,2)=x0*(1-h);
             hp(:,2)=x0*(1+h);
-            set(hs_status,'String',sprintf('3/3: РґРѕР»СЏ Al, С†РµРЅС‚СЂР°Р»СЊРЅР°СЏ СЂР°Р·РЅРѕСЃС‚СЊ, V0=%.6g Р’...',Vwork)); drawnow;
+            set(hs_status,'String',sprintf('3/3: доля Al, центральная разность, V0=%.6g В...',Vwork)); drawnow;
             Jm=run_sens_point(hm,par0,'sens Al-',period_s,Vwork);
             Jp=run_sens_point(hp,par0,'sens Al+',period_s,Vwork);
             dJda=(Jp-Jm)/(2*h);
             Kvals(3)=dJda/J0;
-            methods{3}='С†РµРЅС‚СЂР°Р»СЊРЅР°СЏ; РІСЃРµ x_i РѕРґРЅРѕРІСЂРµРјРµРЅРЅРѕ';
-            steps{3}=sprintf('В± %.4g%%; 0<=x_i<=1',pct);
+            methods{3}='центральная; все x_i одновременно';
+            steps{3}=sprintf('± %.4g%%; 0<=x_i<=1',pct);
         else
             a1=1-h;
             a2=1-2*h;
             if a2<0
-                error('Р”Р»СЏ Al Р·Р°РґР°РЅ СЃР»РёС€РєРѕРј Р±РѕР»СЊС€РѕР№ О”. РќСѓР¶РЅРѕ 1-2О” >= 0.');
+                error('Для Al задан слишком большой ?. Нужно 1-2? >= 0.');
             end
             h1=hst0; h2=hst0;
             h1(:,2)=x0*a1;
             h2(:,2)=x0*a2;
-            set(hs_status,'String',sprintf('3/3: РґРѕР»СЏ Al, Р»РµРІР°СЏ СЂР°Р·РЅРѕСЃС‚СЊ 2-РіРѕ РїРѕСЂСЏРґРєР°, V0=%.6g Р’...',Vwork)); drawnow;
+            set(hs_status,'String',sprintf('3/3: доля Al, левая разность 2-го порядка, V0=%.6g В...',Vwork)); drawnow;
             J1=run_sens_point(h1,par0,'sens Al -h',period_s,Vwork);
             J2=run_sens_point(h2,par0,'sens Al -2h',period_s,Vwork);
             dJda=(3*J0-4*J1+J2)/(2*h);
             Kvals(3)=dJda/J0;
-            methods{3}='Р»РµРІР°СЏ 2-РіРѕ РїРѕСЂСЏРґРєР°; РµСЃС‚СЊ x_i=1';
-            steps{3}=sprintf('-%.4g%% Рё -%.4g%% РґР»СЏ РІСЃРµС… x_i',pct,2*pct);
+            methods{3}='левая 2-го порядка; есть x_i=1';
+            steps{3}=sprintf('-%.4g%% и -%.4g%% для всех x_i',pct,2*pct);
         end
         rows=cell(3,3);
         for ii=1:3
@@ -542,22 +542,22 @@ function cb_sens_calc(~,~)
                            'methods',{methods},'base_values',{bases});
         setappdata(hf,'SensitivityResult',sens_result);
 
-        set(hs_status,'String',sprintf(['Р“РѕС‚РѕРІРѕ. V0=%.6g Р’. Р’ С‚Р°Р±Р»РёС†Рµ РїСЂРёРІРµРґРµРЅС‹ РєРѕСЌС„С„РёС†РёРµРЅС‚С‹ С‡СѓРІСЃС‚РІРёС‚РµР»СЊРЅРѕСЃС‚Рё Рє С‚РµРјРїРµСЂР°С‚СѓСЂРµ, С€РёСЂРёРЅРµ СЃС‚СЂСѓРєС‚СѓСЂС‹ Рё РґРѕР»Рµ Al. ', ...
-            'Р’СЃРµ РёСЃС…РѕРґРЅС‹Рµ Р·РЅР°С‡РµРЅРёСЏ РІР·СЏС‚С‹ РёР· С‚РµРєСѓС‰РµР№ СЃС‚СЂСѓРєС‚СѓСЂС‹. Р”Р»СЏ Al РїСЂРё РЅР°Р»РёС‡РёРё РЅРµСЃРєРѕР»СЊРєРёС… СЃР»РѕС‘РІ x_i=1 РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ Р»РµРІР°СЏ СЂР°Р·РЅРѕСЃС‚СЊ 2-РіРѕ РїРѕСЂСЏРґРєР° Р±РµР· РІС‹С…РѕРґР° Р·Р° РґРёР°РїР°Р·РѕРЅ 0...1.'],Vwork));
+        set(hs_status,'String',sprintf(['Готово. V0=%.6g В. В таблице приведены коэффициенты чувствительности к температуре, ширине структуры и доле Al. ', ...
+            'Все исходные значения взяты из текущей структуры. Для Al при наличии нескольких слоёв x_i=1 используется левая разность 2-го порядка без выхода за диапазон 0...1.'],Vwork));
 
     catch ME
-        set(hs_status,'String',['РћС€РёР±РєР°: ',ME.message]);
-        errordlg(ME.message,'Р Р°СЃС‡С‘С‚ С‡СѓРІСЃС‚РІРёС‚РµР»СЊРЅРѕСЃС‚Рё');
+        set(hs_status,'String',['Ошибка: ',ME.message]);
+        errordlg(ME.message,'Расчёт чувствительности');
     end
     clear cleanupObj
 end
 
 function cb_save(src,event)
-    sync_table_data(); % Р¤РёРєСЃРёСЂСѓРµРј РґР°РЅРЅС‹Рµ РїСЂСЏРјРѕ РїРµСЂРµРґ СЃРѕС…СЂР°РЅРµРЅРёРµРј
+    sync_table_data(); % Фиксируем данные прямо перед сохранением
     align_strd();
     curr_name = strc{inds}.Name;
     default_filename = [regexprep(curr_name, '[\\/:*?"<>|]', '_'), '.mat'];
-    [fName, pName] = uiputfile('*.mat', 'РЎРѕС…СЂР°РЅРёС‚СЊ С‚РµРєСѓС‰СѓСЋ СЃС‚СЂСѓРєС‚СѓСЂСѓ', default_filename);
+    [fName, pName] = uiputfile('*.mat', 'Сохранить текущую структуру', default_filename);
     if isequal(fName,0) || isequal(pName,0)
         return;
     end
@@ -569,15 +569,15 @@ function cb_save(src,event)
     end
     
     save(fullfile(pName, fName), 'single_structure', 'single_vac');
-    set(ht1, 'String', ['РЎС‚СЂСѓРєС‚СѓСЂР° СЃРѕС…СЂР°РЅРµРЅР°: ', fName]);
-    msgbox(['РЎС‚СЂСѓРєС‚СѓСЂР° "', curr_name, '" СѓСЃРїРµС€РЅРѕ СЃРѕС…СЂР°РЅРµРЅР°!'], 'РЎРѕС…СЂР°РЅРµРЅРёРµ');
+    set(ht1, 'String', ['Структура сохранена: ', fName]);
+    msgbox(['Структура "', curr_name, '" успешно сохранена!'], 'Сохранение');
 end
 
 function cb_load(src,event)
-    sync_table_data(); % Р—Р°С‰РёС‰Р°РµРј С‚РµРєСѓС‰РёРµ РґР°РЅРЅС‹Рµ РѕС‚ СЃР±СЂРѕСЃР° РїСЂРё РїРѕРґРіСЂСѓР·РєРµ
+    sync_table_data(); % Защищаем текущие данные от сброса при подгрузке
     align_strd();
     
-    [fNames, pName] = uigetfile('*.mat', 'Р”РѕР±Р°РІРёС‚СЊ СЃС‚СЂСѓРєС‚СѓСЂС‹ РёР· С„Р°Р№Р»РѕРІ', ...
+    [fNames, pName] = uigetfile('*.mat', 'Добавить структуры из файлов', ...
                                 'MultiSelect', 'on');
     if isequal(fNames,0) || isequal(pName,0)
         return;
@@ -604,7 +604,7 @@ function cb_load(src,event)
         try
             loaded = load(fullfile(pName, fName));
         catch ME
-            skipped{end+1} = sprintf('%s вЂ” %s', fName, ME.message); %#ok<AGROW>
+            skipped{end+1} = sprintf('%s — %s', fName, ME.message); %#ok<AGROW>
             continue;
         end
         
@@ -612,7 +612,7 @@ function cb_load(src,event)
             new_name = loaded.single_structure.Name;
             has_vac = isfield(loaded, 'single_vac') && ~isempty(loaded.single_vac);
             
-            % РС‰РµРј РІ С‚РµРєСѓС‰РµРј СЃРїРёСЃРєРµ СЃС‚СЂСѓРєС‚СѓСЂСѓ СЃ С‚Р°РєРёРј Р¶Рµ РёРјРµРЅРµРј
+            % Ищем в текущем списке структуру с таким же именем
             existing_idx = [];
             for j = 1:numel(strc)
                 if strcmp(strc{j}.Name, new_name)
@@ -622,7 +622,7 @@ function cb_load(src,event)
             end
             
             if ~isempty(existing_idx)
-                % --- Р—Р°РјРµРЅСЏРµРј СЃСѓС‰РµСЃС‚РІСѓСЋС‰СѓСЋ (РїРѕР·РёС†РёСЏ СЃРѕС…СЂР°РЅСЏРµС‚СЃСЏ) ---
+                % --- Заменяем существующую (позиция сохраняется) ---
                 strc{existing_idx} = loaded.single_structure;
                 if has_vac
                     strd{existing_idx} = loaded.single_vac;
@@ -633,9 +633,9 @@ function cb_load(src,event)
                 inds = existing_idx;
                 replaced = replaced + 1;
                 replaced_names{end+1} = new_name; %#ok<AGROW>
-                % РРјСЏ РІ СЃРїРёСЃРєРµ РЅРµ РјРµРЅСЏРµС‚СЃСЏ вЂ” hstr С‚СЂРѕРіР°С‚СЊ РЅРµ РЅСѓР¶РЅРѕ
+                % Имя в списке не меняется — hstr трогать не нужно
             else
-                % --- Р”РѕР±Р°РІР»СЏРµРј РєР°Рє РЅРѕРІСѓСЋ ---
+                % --- Добавляем как новую ---
                 new_idx = numel(strc)+1;
                 strc{new_idx} = loaded.single_structure;
                 if has_vac
@@ -668,16 +668,16 @@ function cb_load(src,event)
             added = numel(strc);
             break;
         else
-            skipped{end+1} = sprintf('%s вЂ” РЅРµС‚ СЃРѕС…СЂР°РЅС‘РЅРЅС‹С… СЃС‚СЂСѓРєС‚СѓСЂ', fName); %#ok<AGROW>
+            skipped{end+1} = sprintf('%s — нет сохранённых структур', fName); %#ok<AGROW>
         end
     end
     
     if added + replaced == 0
-        msg = 'Р’ РІС‹Р±СЂР°РЅРЅС‹С… С„Р°Р№Р»Р°С… РЅРµС‚ СЃРѕС…СЂР°РЅС‘РЅРЅС‹С… СЃС‚СЂСѓРєС‚СѓСЂ.';
+        msg = 'В выбранных файлах нет сохранённых структур.';
         if ~isempty(skipped)
-            msg = [msg, newline, newline, 'РџСЂРѕРїСѓС‰РµРЅС‹:', newline, strjoin(skipped, newline)];
+            msg = [msg, newline, newline, 'Пропущены:', newline, strjoin(skipped, newline)];
         end
-        errordlg(msg, 'РћС€РёР±РєР° Р·Р°РіСЂСѓР·РєРё');
+        errordlg(msg, 'Ошибка загрузки');
         return;
     end
     
@@ -688,49 +688,49 @@ function cb_load(src,event)
     end
     
     dstr(strc{inds});
-    set(ht1, 'String', ['Р—Р°РіСЂСѓР¶РµРЅРѕ С„Р°Р№Р»РѕРІ: ', num2str(numel(fNames))]);
+    set(ht1, 'String', ['Загружено файлов: ', num2str(numel(fNames))]);
     
-    % РћС‚РѕР±СЂР°Р¶Р°РµРј Р’РђРҐ Р·Р°РіСЂСѓР¶РµРЅРЅС‹С… СЃС‚СЂСѓРєС‚СѓСЂ
+    % Отображаем ВАХ загруженных структур
     pl_vac();
     set(hw, 'SelectedTab', hw2);
     
-    % Р¤РѕСЂРјРёСЂСѓРµРј РѕС‚С‡С‘С‚
+    % Формируем отчёт
     msg_lines = {};
     if added > 0
-        msg_lines{end+1} = sprintf('Р”РѕР±Р°РІР»РµРЅРѕ СЃС‚СЂСѓРєС‚СѓСЂ: %d (СЃ РіРѕС‚РѕРІС‹РјРё Р’РђРҐ: %d).', added, added_with_vac);
+        msg_lines{end+1} = sprintf('Добавлено структур: %d (с готовыми ВАХ: %d).', added, added_with_vac);
         if ~isempty(added_names)
-            msg_lines{end+1} = ['  вЂў ', strjoin(added_names, ', ')]; %#ok<AGROW>
+            msg_lines{end+1} = ['  • ', strjoin(added_names, ', ')]; %#ok<AGROW>
         end
     end
     if replaced > 0
-        msg_lines{end+1} = sprintf('Р—Р°РјРµРЅРµРЅРѕ (СЃРѕРІРїР°Р»Рё РїРѕ РёРјРµРЅРё, РѕСЃС‚Р°РІР»РµРЅР° Р·Р°РіСЂСѓР¶РµРЅРЅР°СЏ): %d (СЃ Р’РђРҐ: %d).', replaced, replaced_with_vac);
+        msg_lines{end+1} = sprintf('Заменено (совпали по имени, оставлена загруженная): %d (с ВАХ: %d).', replaced, replaced_with_vac);
         if ~isempty(replaced_names)
-            msg_lines{end+1} = ['  вЂў ', strjoin(replaced_names, ', ')]; %#ok<AGROW>
+            msg_lines{end+1} = ['  • ', strjoin(replaced_names, ', ')]; %#ok<AGROW>
         end
     end
     if added_with_vac + replaced_with_vac > 0
-        msg_lines{end+1} = 'Р“СЂР°С„РёРєРё Р’РђРҐ РїРѕРєР°Р·Р°РЅС‹ РЅР° РІРєР»Р°РґРєРµ В«Р’РђРҐВ».';
+        msg_lines{end+1} = 'Графики ВАХ показаны на вкладке «ВАХ».';
     end
     if ~isempty(skipped)
         msg_lines{end+1} = '';
-        msg_lines{end+1} = 'РџСЂРѕРїСѓС‰РµРЅРЅС‹Рµ С„Р°Р№Р»С‹:';
+        msg_lines{end+1} = 'Пропущенные файлы:';
         msg_lines = [msg_lines, skipped]; %#ok<AGROW>
     end
     if old_format_loaded
         msg_lines{end+1} = '';
-        msg_lines{end+1} = 'Р¤Р°Р№Р» СЃС‚Р°СЂРѕРіРѕ С„РѕСЂРјР°С‚Р° Р·Р°РјРµРЅРёР» РІРµСЃСЊ С‚РµРєСѓС‰РёР№ СЃРїРёСЃРѕРє СЃС‚СЂСѓРєС‚СѓСЂ.';
+        msg_lines{end+1} = 'Файл старого формата заменил весь текущий список структур.';
     end
     if isempty(msg_lines)
-        msg_lines = {'Р—Р°РіСЂСѓР·РєР° Р·Р°РІРµСЂС€РµРЅР°.'};
+        msg_lines = {'Загрузка завершена.'};
     end
-    msgbox(msg_lines, 'Р—Р°РіСЂСѓР·РєР°');
+    msgbox(msg_lines, 'Загрузка');
 end
 
 function cb_save_vac(src,event)
     sync_table_data();
     align_strd();
     if isempty(strd) || numel(strd)<inds || isempty(strd{inds})
-        errordlg('РќРµС‚ РґР°РЅРЅС‹С… РґР»СЏ С‚РµРєСѓС‰РµР№ СЃС‚СЂСѓРєС‚СѓСЂС‹. РќР°Р¶РјРёС‚Рµ В«РЎС‚Р°СЂС‚В».','РЎРѕС…СЂР°РЅРµРЅРёРµ Р’РђРҐ');
+        errordlg('Нет данных для текущей структуры. Нажмите «Старт».','Сохранение ВАХ');
         return;
     end
     name_s=strc{inds}.Name;
@@ -739,8 +739,8 @@ function cb_save_vac(src,event)
     Js_s=strd{inds}{3};
     T=sprintf('VAC_%s_T%dK.mat', regexprep(name_s,'\W','_'), round(T_s));
     save(T,'Vs_s','Js_s','T_s','name_s');
-    set(ht1,'String',['Р’РђРҐ СЃРѕС…СЂР°РЅРµРЅР° РІ С„Р°Р№Р»: ',T]);
-    msgbox(['Р¤Р°Р№Р» СЃРѕС…СЂР°РЅС‘РЅ: ',T],'РЎРѕС…СЂР°РЅРµРЅРёРµ Р’РђРҐ');
+    set(ht1,'String',['ВАХ сохранена в файл: ',T]);
+    msgbox(['Файл сохранён: ',T],'Сохранение ВАХ');
 end
 
 ic_new=geticon(fullfile(matlabroot,'toolbox','matlab','icons','file_new.png'));
@@ -754,7 +754,7 @@ ic_calc=geticon(fullfile(matlabroot,'toolbox','matlab','icons','help_gs.png'));
 nums=1;
 inds=1;
 strc={default_structure()};
-strc{1}.Name='РЎС‚СЂСѓРєС‚СѓСЂР° 1';
+strc{1}.Name='Структура 1';
 strd={};
 rpr=[];
 axs=[];
@@ -762,67 +762,67 @@ kvac=true;
 
 hf=figure('NumberTitle','off','Name','OwnS','MenuBar','none','Position',[300 200 900 500],'Resize','off');
     hb=uitoolbar(hf);
-        hb2=uipushtool(hb,'CData',ic_open,'ToolTip','Р—Р°РіСЂСѓР·РёС‚СЊ СЃС‚СЂСѓРєС‚СѓСЂС‹ (РјРѕР¶РЅРѕ РІС‹Р±СЂР°С‚СЊ РЅРµСЃРєРѕР»СЊРєРѕ: Ctrl+Click)','ClickedCallback',@cb_load);
-        hb3=uipushtool(hb,'CData',ic_save,'ToolTip','РЎРѕС…СЂР°РЅРёС‚СЊ СЃС‚СЂСѓРєС‚СѓСЂСѓ','ClickedCallback',@cb_save);
-        hb7=uipushtool(hb,'CData',ic_calc,'ToolTip','Р—Р°РїСѓСЃРє СЂР°СЃС‡С‘С‚Р°','ClickedCallback',@cb_calc);
+        hb2=uipushtool(hb,'CData',ic_open,'ToolTip','Загрузить структуры (можно выбрать несколько: Ctrl+Click)','ClickedCallback',@cb_load);
+        hb3=uipushtool(hb,'CData',ic_save,'ToolTip','Сохранить структуру','ClickedCallback',@cb_save);
+        hb7=uipushtool(hb,'CData',ic_calc,'ToolTip','Запуск расчёта','ClickedCallback',@cb_calc);
     hw=uitabgroup(hf,'Position',[0 .05 1 .95],'SelectionChangedFcn',@cb_tab_change);
-        hw1=uitab(hw,'Title','РЎС‚СЂСѓРєС‚СѓСЂС‹');
-            hw11=uipanel(hw1,'Position',[.00 .21 .355 .79],'Title','Р РµР¶РёРјС‹');
-                hw111=uitable(hw11,'Units','normalized','Position',[.0 .05 1 .95],'ColumnEditable',true,'ColumnName',{'Р’СЂРµРјСЏ','Р•РґРёРЅРёС†С‹','РљРѕСЌС„С„РёС†РёРµРЅС‚С‹','TРµРјРїРµСЂР°С‚СѓСЂР°, K'},'ColumnWidth',{39 53 90 90},'ColumnFormat',{'numeric',{'c','РјРёРЅ','С‡Р°СЃ','СЃСѓС‚РєРё','РіРѕРґ'},'numeric'},'CellEditCallback',@cb_regime_edit);
-                hw112=uicontrol(hw11,'Style','pushbutton','Units','Normalized','Position',[.0 .0 .5 .07],'CallBack',@cb_addr,'String','Р”РѕР±Р°РІРёС‚СЊ');
-                hw113=uicontrol(hw11,'Style','pushbutton','Units','Normalized','Position',[.5 .0 .5 .07],'CallBack',@cb_delr,'String','РЈРґР°Р»РёС‚СЊ');
-            hw12=uipanel(hw1,'Position',[.00 .0 .355 .21],'Title','РџР°СЂР°РјРµС‚СЂС‹');
-                hw121=uitable(hw12,'RowName',{'Nt','РРЅС‚РµСЂРІР°Р» РёРЅС‚РµРіСЂ.','РўРѕС‡РЅРѕСЃС‚СЊ РёРЅС‚РµРіСЂ.'},'Data',[100; 1; 1E-35],'Units','normalized','Position',[0 0 1 1],'ColumnEditable',true,'CellEditCallback',@cb_integ_edit);
-            hw14=uipanel(hw1,'Position',[.355 .0 .645 1],'Title','Р РµРґР°РєС‚РёСЂРѕРІР°РЅРёРµ СЃС‚СЂСѓРєС‚СѓСЂ');
-                hw141=uicontrol(hw14,'Style','pushbutton','Units','normalized','Position',[.00 .92 .69 .06],'String','Р”РѕР±Р°РІРёС‚СЊ СЃС‚СЂСѓРєС‚СѓСЂСѓ','Callback',@cb_news);
-                hw150=uicontrol(hw14,'Style','pushbutton','Units','normalized','Position',[.70 .92 .30 .06],'String','РЎРѕС…СЂР°РЅРёС‚СЊ Р’РђРҐ','Callback',@cb_save_vac);
-                hw142=uicontrol(hw14,'Style','text','Units','normalized','Position',[.7 .81 .12 .1],'String','РЎС‚СЂСѓРєС‚СѓСЂР°');
-                hw143=uicontrol(hw14,'Style','popupmenu','Units','normalized','Position',[.81 .82 .17 .1],'String',{'РЎС‚СЂСѓРєС‚СѓСЂР° 1'},'Callback',@cb_chs);
-                hw144=uicontrol(hw14,'Style','pushbutton','Units','Normalized','Position',[.000 .86 .230 .06],'CallBack',@cb_nnms,'String','РџРµСЂРµРёРјРµРЅРѕРІР°С‚СЊ');
-                hw145=uicontrol(hw14,'Style','pushbutton','Units','Normalized','Position',[.230 .86 .230 .06],'CallBack',@cb_cops,'String','РљРѕРїРёСЂРѕРІР°С‚СЊ');
-                hw146=uicontrol(hw14,'Style','pushbutton','Units','Normalized','Position',[.460 .86 .230 .06],'CallBack',@cb_dels,'String','РЈРґР°Р»РёС‚СЊ','Enable','off');
-                hw147=uicontrol(hw14,'Style','pushbutton','Units','Normalized','Position',[.000 .80 .345 .06],'CallBack',@cb_add,'String','Р”РѕР±Р°РІРёС‚СЊ СЃР»РѕР№');
-                hw148=uicontrol(hw14,'Style','pushbutton','Units','Normalized','Position',[.345 .80 .345 .06],'CallBack',@cb_del,'String','РЈРґР°Р»РёС‚СЊ СЃР»РѕР№','Enable','off');
-                hw149=uitable(hw14,'Units','normalized','Position',[.00 0 .69 .8],'ColumnEditable',true,'ColumnName',{'РўРѕР»С‰РёРЅР°, РЅРј','Р”РѕР»СЏ Al','NРґ, 10^22/РєСѓР±. Рј', 'РћРїС‚. РїРѕС‚РµРЅС†РёР°Р», Р’'},'ColumnWidth',{79 50 100 110},'CellEditCallback',@cb_hst);
-                hw140=uitable(hw14,'Units','normalized','Position',[.69 0 .31 .8],'ColumnEditable',true,'RowName',{'Rs, РћРј','gx, СЌР’*РЅРј','r1','r2','Nz','Ns','Vmin, Р’','Vmax, Р’','Nv','Emin, СЌР’','Emax, СЌР’','NE','T, K'},'ColumnWidth',{73},'CellEditCallback',@cb_par);
-        hw2=uitab(hw,'Title','Р’РђРҐ');
+        hw1=uitab(hw,'Title','Структуры');
+            hw11=uipanel(hw1,'Position',[.00 .21 .355 .79],'Title','Режимы');
+                hw111=uitable(hw11,'Units','normalized','Position',[.0 .05 1 .95],'ColumnEditable',true,'ColumnName',{'Время','Единицы','Коэффициенты','Tемпература, K'},'ColumnWidth',{39 53 90 90},'ColumnFormat',{'numeric',{'c','мин','час','сутки','год'},'numeric'},'CellEditCallback',@cb_regime_edit);
+                hw112=uicontrol(hw11,'Style','pushbutton','Units','Normalized','Position',[.0 .0 .5 .07],'CallBack',@cb_addr,'String','Добавить');
+                hw113=uicontrol(hw11,'Style','pushbutton','Units','Normalized','Position',[.5 .0 .5 .07],'CallBack',@cb_delr,'String','Удалить');
+            hw12=uipanel(hw1,'Position',[.00 .0 .355 .21],'Title','Параметры');
+                hw121=uitable(hw12,'RowName',{'Nt','Интервал интегр.','Точность интегр.'},'Data',[100; 1; 1E-35],'Units','normalized','Position',[0 0 1 1],'ColumnEditable',true,'CellEditCallback',@cb_integ_edit);
+            hw14=uipanel(hw1,'Position',[.355 .0 .645 1],'Title','Редактирование структур');
+                hw141=uicontrol(hw14,'Style','pushbutton','Units','normalized','Position',[.00 .92 .69 .06],'String','Добавить структуру','Callback',@cb_news);
+                hw150=uicontrol(hw14,'Style','pushbutton','Units','normalized','Position',[.70 .92 .30 .06],'String','Сохранить ВАХ','Callback',@cb_save_vac);
+                hw142=uicontrol(hw14,'Style','text','Units','normalized','Position',[.7 .81 .12 .1],'String','Структура');
+                hw143=uicontrol(hw14,'Style','popupmenu','Units','normalized','Position',[.81 .82 .17 .1],'String',{'Структура 1'},'Callback',@cb_chs);
+                hw144=uicontrol(hw14,'Style','pushbutton','Units','Normalized','Position',[.000 .86 .230 .06],'CallBack',@cb_nnms,'String','Переименовать');
+                hw145=uicontrol(hw14,'Style','pushbutton','Units','Normalized','Position',[.230 .86 .230 .06],'CallBack',@cb_cops,'String','Копировать');
+                hw146=uicontrol(hw14,'Style','pushbutton','Units','Normalized','Position',[.460 .86 .230 .06],'CallBack',@cb_dels,'String','Удалить','Enable','off');
+                hw147=uicontrol(hw14,'Style','pushbutton','Units','Normalized','Position',[.000 .80 .345 .06],'CallBack',@cb_add,'String','Добавить слой');
+                hw148=uicontrol(hw14,'Style','pushbutton','Units','Normalized','Position',[.345 .80 .345 .06],'CallBack',@cb_del,'String','Удалить слой','Enable','off');
+                hw149=uitable(hw14,'Units','normalized','Position',[.00 0 .69 .8],'ColumnEditable',true,'ColumnName',{'Толщина, нм','Доля Al','Nд, 10^22/куб. м', 'Опт. потенциал, В'},'ColumnWidth',{79 50 100 110},'CellEditCallback',@cb_hst);
+                hw140=uitable(hw14,'Units','normalized','Position',[.69 0 .31 .8],'ColumnEditable',true,'RowName',{'Rs, Ом','gx, эВ*нм','r1','r2','Nz','Ns','Vmin, В','Vmax, В','Nv','Emin, эВ','Emax, эВ','NE','T, K'},'ColumnWidth',{73},'CellEditCallback',@cb_par);
+        hw2=uitab(hw,'Title','ВАХ');
             hw22=uicontrol(hw2,'Style','Slider','Units','normalized','Position',[0 0.05 1 .04],'Min',0,'Max',0,'Value',0,'SliderStep',[.1 .1],'Callback',@cb_sldrvac);
 
-        hw7=uitab(hw,'Title','Р§СѓРІСЃС‚РІРёС‚РµР»СЊРЅРѕСЃС‚СЊ');
-            hs_panel=uipanel(hw7,'Units','normalized','Position',[.01 .72 .98 .27],'Title','Р§СѓРІСЃС‚РІРёС‚РµР»СЊРЅРѕСЃС‚СЊ С‚РµРєСѓС‰РµР№ РµРґРёРЅРѕР№ СЃС‚СЂСѓРєС‚СѓСЂС‹');
-                uicontrol(hs_panel,'Style','text','Units','normalized','Position',[.02 .61 .17 .20],'String','Р Р°Р±РѕС‡РµРµ V0, Р’');
+        hw7=uitab(hw,'Title','Чувствительность');
+            hs_panel=uipanel(hw7,'Units','normalized','Position',[.01 .72 .98 .27],'Title','Чувствительность текущей единой структуры');
+                uicontrol(hs_panel,'Style','text','Units','normalized','Position',[.02 .61 .17 .20],'String','Рабочее V0, В');
                 hs_v0=uicontrol(hs_panel,'Style','edit','Units','normalized','Position',[.18 .64 .10 .20],'String','0.6');
-                uicontrol(hs_panel,'Style','text','Units','normalized','Position',[.32 .61 .12 .20],'String','О”, %');
+                uicontrol(hs_panel,'Style','text','Units','normalized','Position',[.32 .61 .12 .20],'String','?, %');
                 hs_delta=uicontrol(hs_panel,'Style','edit','Units','normalized','Position',[.42 .64 .09 .20],'String','1');
-                uicontrol(hs_panel,'Style','text','Units','normalized','Position',[.55 .61 .12 .20],'String','РџРµСЂРёРѕРґ');
+                uicontrol(hs_panel,'Style','text','Units','normalized','Position',[.55 .61 .12 .20],'String','Период');
                 hs_period=uicontrol(hs_panel,'Style','edit','Units','normalized','Position',[.65 .64 .09 .20],'String','0');
                 hs_calc=uicontrol(hs_panel,'Style','pushbutton','Units','normalized','Position',[.77 .59 .21 .28], ...
-                    'String','Р Р°СЃСЃС‡РёС‚Р°С‚СЊ','Callback',@cb_sens_calc);
+                    'String','Рассчитать','Callback',@cb_sens_calc);
                 hs_info=uicontrol(hs_panel,'Style','text','Units','normalized','HorizontalAlignment','left', ...
                     'Position',[.02 .05 .96 .38], ...
-                    'String',['Р’ С‚Р°Р±Р»РёС†Сѓ РІС‹РІРѕРґСЏС‚СЃСЏ С‚РѕР»СЊРєРѕ K С‡СѓРІСЃС‚РІРёС‚РµР»СЊРЅРѕСЃС‚Рё Рє С‚РµРјРїРµСЂР°С‚СѓСЂРµ T, С€РёСЂРёРЅРµ (С‚РѕР»С‰РёРЅР°Рј РІСЃРµС… СЃР»РѕС‘РІ d_i) Рё РґРѕР»Рµ Al. ', ...
-                    'РџР°СЂР°РјРµС‚СЂС‹ Р±РµСЂСѓС‚СЃСЏ РёР· С‚РµРєСѓС‰РµР№ СЃС‚СЂСѓРєС‚СѓСЂС‹. Р•СЃР»Рё РѕРґРёРЅ РёР»Рё РЅРµСЃРєРѕР»СЊРєРѕ СЃР»РѕС‘РІ РёРјРµСЋС‚ Al=1, РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ Р»РµРІР°СЏ СЂР°Р·РЅРѕСЃС‚СЊ 2-РіРѕ РїРѕСЂСЏРґРєР° Р±РµР· РІС‹С…РѕРґР° Р·Р° 0...1.']);
+                    'String',['В таблицу выводятся только K чувствительности к температуре T, ширине (толщинам всех слоёв d_i) и доле Al. ', ...
+                    'Параметры берутся из текущей структуры. Если один или несколько слоёв имеют Al=1, используется левая разность 2-го порядка без выхода за 0...1.']);
             hs_table=uitable(hw7,'Units','normalized','Position',[.06 .25 .88 .36], ...
-                'ColumnName',{'РџР°СЂР°РјРµС‚СЂ','Р‘Р°Р·РѕРІРѕРµ Р·РЅР°С‡РµРЅРёРµ','K С‡СѓРІСЃС‚РІРёС‚РµР»СЊРЅРѕСЃС‚Рё'}, ...
+                'ColumnName',{'Параметр','Базовое значение','K чувствительности'}, ...
                 'ColumnWidth',{220 380 150});
             hs_status=uicontrol(hw7,'Style','text','Units','normalized','HorizontalAlignment','left', ...
-                'Position',[.06 .10 .88 .08],'String','РЎРЅР°С‡Р°Р»Р° РЅР°Р¶РјРёС‚Рµ В«РЎС‚Р°СЂС‚В» РґР»СЏ СЂР°СЃС‡С‘С‚Р° Р’РђРҐ. Р—Р°С‚РµРј Р·Р°РґР°Р№С‚Рµ V0 Рё О” Рё РЅР°Р¶РјРёС‚Рµ В«Р Р°СЃСЃС‡РёС‚Р°С‚СЊВ».');
+                'Position',[.06 .10 .88 .08],'String','Сначала нажмите «Старт» для расчёта ВАХ. Затем задайте V0 и ? и нажмите «Рассчитать».');
     ht=uipanel(hf,'Position',[0 0 1 .05]);
-        ht1=uicontrol(ht,'Style','text','Units','normalized','Position',[0 0 1 .9],'String','Р“РѕС‚РѕРІРѕ Рє СЂР°СЃС‡С‘С‚Сѓ');
+        ht1=uicontrol(ht,'Style','text','Units','normalized','Position',[0 0 1 .9],'String','Готово к расчёту');
 
 dstr(strc{inds});
         
 function [zi,Vs,Js,Ts,Vc,Nc,xdi,ndi,tm]=owns(hst,rpr,gpr,V,E,hstnm,hnd)
-    %РљРѕРЅСЃС‚Р°РЅС‚С‹ (РІ РЎР)
-    hp=1.054E-34;       %РџРѕСЃС‚РѕСЏРЅРЅР°СЏ Р”РёСЂР°РєР°
-    qe=1.602E-19;       %Р­Р»РµРјРµРЅС‚Р°СЂРЅС‹Р№ Р·Р°СЂСЏРґ
-    m0=9.109E-31;       %РњР°СЃСЃР° РїРѕРєРѕСЏ СЌР»РµРєС‚СЂРѕРЅР°
-    eps0=8.85E-12;      %Р­Р»РµРєС‚СЂРёС‡РµСЃРєР°СЏ РїРѕСЃС‚РѕСЏРЅРЅР°СЏ
-    kb=1.38E-23;        %РџРѕСЃС‚РѕСЏРЅРЅР°СЏ Р‘РѕР»СЊС†РјР°РЅР°
-    Ea=3.5*qe;          %Р­РЅРµСЂРіРёСЏ Р°РєС‚РёРІР°С†РёРё
-    D0=0.17;            %РљРѕСЌС„С„РёС†РёРµРЅС‚ РґРёС„С„СѓР·РёРё Al РїСЂРё Р±РµСЃРєРѕРЅРµС‡РЅРѕ Р±РѕР»СЊС€РѕР№ С‚РµРјРїРµСЂР°С‚СѓСЂРµ
-    Cr=1/2/pi^2*(2*(0.063*m0)/hp^2)^(3/2);                %РџСЂРµРґС‹РЅС‚РµРіСЂР°Р»СЊРЅС‹Р№ РјРЅРѕР¶РёС‚РµР»СЊ РІ С„РѕСЂРјСѓР»Рµ РґР»СЏ РєРѕРЅС†РµРЅС‚СЂР°С†РёРё РІ СЂРµР·РµСЂРІСѓР°СЂР°С…
-    %РР·РІР»РµС‡РµРЅРёРµ РїР°СЂР°РјРµС‚СЂРѕРІ
+    %Константы (в СИ)
+    hp=1.054E-34;       %Постоянная Дирака
+    qe=1.602E-19;       %Элементарный заряд
+    m0=9.109E-31;       %Масса покоя электрона
+    eps0=8.85E-12;      %Электрическая постоянная
+    kb=1.38E-23;        %Постоянная Больцмана
+    Ea=3.5*qe;          %Энергия активации
+    D0=0.17;            %Коэффициент диффузии Al при бесконечно большой температуре
+    Cr=1/2/pi^2*(2*(0.063*m0)/hp^2)^(3/2);                %Предынтегральный множитель в формуле для концентрации в резервуарах
+    %Извлечение параметров
     dl=hst(1,:);
     xl=hst(2,:);
     nl=hst(3,:); 
@@ -845,24 +845,24 @@ function [zi,Vs,Js,Ts,Vc,Nc,xdi,ndi,tm]=owns(hst,rpr,gpr,V,E,hstnm,hnd)
     Nz=gpr(7);                 
     Ns=gpr(8);                   
     Nt=gpr(9);
-    %РџРѕСЃС‚СЂРѕРµРЅРёРµ РјР°СЃСЃРёРІРѕРІ
+    %Построение массивов
     zl=[0,cumsum(dl)];
     tl=[0,cumsum(tp)];
     Dl=D0*exp(-Ea/kb./Tp).*kp;
-    %РџРµСЂРµРІРѕРґ РІ РЎР
+    %Перевод в СИ
     zl=zl*1E-9;
     gx=gx*1E-10*qe;
     wl=wl*qe;
     Rs=Rs*1E-12;
     E=E*qe;
     dei=dei*qe;
-    %Р”РЅРѕ Р·РѕРЅС‹ РїСЂРѕРІРѕРґРёРјРѕСЃС‚Рё, СЌС„С„РµРєС‚РёРІРЅР°СЏ РјР°СЃСЃР° Рё РґРёСЌР»РµРєС‚СЂРёС‡РµСЃРєР°СЏ РїСЂРѕРЅРёС†Р°РµРјРѕСЃС‚СЊ(РІ AlGaAs)
+    %Дно зоны проводимости, эффективная масса и диэлектрическая проницаемость(в AlGaAs)
     eg=@(x)0.79*x*qe;
     ex=@(x)(0.475-0.335*x+0.143*x.^2)*qe;
     mg=@(x)(0.063+0.083*x)*m0;
     mx=@(x)(1.30-0.33*x)*m0;
     ep=@(x)(12.9-2.84*x)*eps0;
-    %РџСЂРѕРіРѕРЅРєР° (С‚СЂРё РґРёР°РіРѕРЅР°Р»Рё)
+    %Прогонка (три диагонали)
     function x=sl3(d,t,b)
         n=length(d);
         x=zeros(1,n);
@@ -875,7 +875,7 @@ function [zi,Vs,Js,Ts,Vc,Nc,xdi,ndi,tm]=owns(hst,rpr,gpr,V,E,hstnm,hnd)
             x(I)=(b(I)-t(I)*x(I+1))/d(I);
         end
     end
-    %РџСЂРѕРіРѕРЅРєР° (РїСЏС‚СЊ РґРёР°РіРѕРЅР°Р»РµР№)
+    %Прогонка (пять диагоналей)
     function x=sl5(d,a,t,b)
         n=length(d);
         x=zeros(1,n);
@@ -894,7 +894,7 @@ function [zi,Vs,Js,Ts,Vc,Nc,xdi,ndi,tm]=owns(hst,rpr,gpr,V,E,hstnm,hnd)
             x(I)=(b(I)-a(I)*x(I+1)-t(I)*x(I+2))/d(I);
         end
     end
-    %Р¤СѓРЅРєС†РёСЏ РїРѕСЃС‚СЂРѕРµРЅРёСЏ СЃРµС‚РѕРє
+    %Функция построения сеток
     function xi=fxi(xl,zl,zi)
         xi=zeros(1,length(zi)-1);
         for I=1:length(zi)-1  
@@ -918,7 +918,7 @@ function [zi,Vs,Js,Ts,Vc,Nc,xdi,ndi,tm]=owns(hst,rpr,gpr,V,E,hstnm,hnd)
             end
         end
     end
-    %Р¤СѓРЅРєС†РёСЏ СЂР°СЃС‡С‘С‚Р° РґРёС„С„СѓР·РёРѕРЅРЅС‹С… РёР·РјРµРЅРµРЅРёР№ РїСЂРѕС„РёР»СЏ РЅР° РёРЅС‚РµСЂРІР°Р»Рµ РІСЂРµРјРµРЅРё
+    %Функция расчёта диффузионных изменений профиля на интервале времени
     function xi=dfsi(D,ti,xi,dz)
         nz=length(xi);
         L=diag(ones(1,nz-1),1)-2*eye(nz)+diag(ones(1,nz-1),-1);
@@ -929,7 +929,7 @@ function [zi,Vs,Js,Ts,Vc,Nc,xdi,ndi,tm]=owns(hst,rpr,gpr,V,E,hstnm,hnd)
             xi=xi+L*xi*(ti(I+1)-ti(I));
         end
     end
-    %Р¤СѓРЅРєС†РёСЏ СЂР°СЃС‡С‘С‚Р° РґРёС„С„СѓР·РёРѕРЅРЅС‹С… РёР·РјРµРЅРµРЅРёР№ РЅР° РЅРµСЃРєРѕР»СЊРєРёС… РёРЅС‚РµСЂРІР°Р»Р°С…
+    %Функция расчёта диффузионных изменений на нескольких интервалах
     function xi=dfs(Dt,tl,x0,dz,Nt)
         xi=zeros(length(tl),length(x0));
         xi(1,:)=x0;
@@ -937,19 +937,19 @@ function [zi,Vs,Js,Ts,Vc,Nc,xdi,ndi,tm]=owns(hst,rpr,gpr,V,E,hstnm,hnd)
             xi(I+1,:)=dfsi(Dt(I),linspace(tl(I),tl(I+1),Nt),xi(I,:)',dz);
         end
     end
-    %Р¤СѓРЅРєС†РёСЏ СЂР°СЃС‡С‘С‚Р° СѓСЂРѕРІРЅСЏ Р¤РµСЂРјРё
+    %Функция расчёта уровня Ферми
     function Ef=FindEF(Nd,T)   
         foo=@(E,Ef)sqrt(E)./(1+exp((E-Ef)/kb/T));
         nE=@(Ef)Cr*integral(@(E)foo(E,Ef),0,dei,'AbsTol',itl,'ArrayValued',true);
         nm=@(E)nE(E)-Nd;
         Ef=fzero(nm,0,optimset('MaxFunEvals',Inf,'TolX',itl));
     end
-    %Р¤СѓРЅРєС†РёСЏ СЂР°СЃС‡С‘С‚Р° Р’РђРҐ
+    %Функция расчёта ВАХ
     function [Vs,J,Te,Vc,Nc]=JV(V,E,xi,ni,wi,dz,i1,i2,Ns,T,R,indt)
-        kT=kb*T;                                              %РўРµРїР»РѕРІР°СЏ СЌРЅРµСЂРіРёСЏ
-        Vr=kT/qe;                                             %РўРµРїР»РѕРІРѕР№ РїРѕС‚РµРЅС†РёР°Р»
-        Ca=sqrt(2)*((0.063*m0)^(3/2))*kT/(((2*pi)^2)*hp^3);   %РџСЂРµРґС‹РЅС‚РµРіСЂР°Р»СЊРЅС‹Р№ РјРЅРѕР¶РёС‚РµР»СЊ РІ С„РѕСЂРјСѓР»Рµ РґР»СЏ РєРѕРЅС†РµРЅС‚СЂР°С†РёРё РІ РєР°РЅР°Р»Рµ
-        Cj=0.0315*m0*qe*kT/pi^2/hp^3;                         %РџСЂРµРґС‹РЅС‚РµРіСЂР°Р»СЊРЅС‹Р№ РјРЅРѕР¶РёС‚РµР»СЊ РІ С„РѕСЂРјСѓР»Рµ Р¦Сѓ-Р•СЃР°РєРё
+        kT=kb*T;                                              %Тепловая энергия
+        Vr=kT/qe;                                             %Тепловой потенциал
+        Ca=sqrt(2)*((0.063*m0)^(3/2))*kT/(((2*pi)^2)*hp^3);   %Предынтегральный множитель в формуле для концентрации в канале
+        Cj=0.0315*m0*qe*kT/pi^2/hp^3;                         %Предынтегральный множитель в формуле Цу-Есаки
         Ef=FindEF(ni(1),T);
         n=i2-i1+1;
         egi=[eg(xi(1)),(eg(xi(2:end))+eg(xi(1:end-1)))/2,eg(xi(end))];
@@ -1067,7 +1067,7 @@ function [zi,Vs,Js,Ts,Vc,Nc,xdi,ndi,tm]=owns(hst,rpr,gpr,V,E,hstnm,hnd)
         for Iv=1:length(V)
             vi=[zeros(1,i1-1),linspace(0,V(Iv),n),V(Iv)*ones(1,Nz-i2)];
             for Is=1:Ns
-                set(hnd,'String',[hstnm,' - Р’СЂРµРјСЏ: ',num2str(indt),'/',num2str(length(tl)),' РќР°РїСЂСЏР¶РµРЅРёРµ: ',num2str(Iv),'/',num2str(length(V)),' РЎР°РјРѕСЃРѕРіР»Р°СЃРѕРІР°РЅРёРµ: ',num2str(Is),'/',num2str(Ns)]); drawnow;
+                set(hnd,'String',[hstnm,' - Время: ',num2str(indt),'/',num2str(length(tl)),' Напряжение: ',num2str(Iv),'/',num2str(length(V)),' Самосогласование: ',num2str(Is),'/',num2str(Ns)]); drawnow;
                 gi=nz(vi);
                 cb=gi(2:end-1).*(1-vi(2:end-1)/Vr)-ni(2:end-1);
                 cb(end)=cb(end)-V(Iv)*ci(end);
@@ -1075,7 +1075,7 @@ function [zi,Vs,Js,Ts,Vc,Nc,xdi,ndi,tm]=owns(hst,rpr,gpr,V,E,hstnm,hnd)
             end
             gi=nz(vi);
             TDE=@(E)TE(E,vi(i1:i2),V(Iv)<0).*log((1+exp((egi(i1)-qe*vi(i1)+Ef-E)/kT))./(1+exp((egi(i2)-qe*vi(i2)+Ef-E)/kT)));
-            set(hnd,'String',[hstnm,' - T: ',num2str(indt),'/',num2str(length(tl)),' V: ',num2str(Iv),'/',num2str(length(V)),' Р’С‹С‡РёСЃР»РµРЅРёРµ РІС‹С…РѕРґРЅС‹С… РїР°СЂР°РјРµС‚СЂРѕРІ']); drawnow;
+            set(hnd,'String',[hstnm,' - T: ',num2str(indt),'/',num2str(length(tl)),' V: ',num2str(Iv),'/',num2str(length(V)),' Вычисление выходных параметров']); drawnow;
             E0=(egi(i1)-qe*vi(i1))*(V(Iv)>=0)+(egi(i2)-qe*vi(i2))*(V(Iv)<0);
             J(Iv)=Cj*integral(TDE,E0,E0+dei,'AbsTol',itl);
             Vc(:,Iv)=vi;
@@ -1084,21 +1084,21 @@ function [zi,Vs,Js,Ts,Vc,Nc,xdi,ndi,tm]=owns(hst,rpr,gpr,V,E,hstnm,hnd)
         end
         Vs=V+J*R*100E-12;
     end
-    %РџРѕСЃС‚СЂРѕРµРЅРёРµ СЃРµС‚РѕРє
-    dz=zl(end)/(Nz-1);              %РЁР°Рі РїСЂРѕСЃС‚СЂР°РЅСЃС‚РІРµРЅРЅРѕР№ СЃРµС‚РєРё
-    zi=linspace(0,zl(end),Nz);      %РџСЂРѕСЃС‚СЂР°РЅСЃС‚РІРµРЅРЅР°СЏ СЃРµС‚РєР° (РіСЂР°РЅРёС†С‹ РёРЅС‚РµСЂРІР°Р»РѕРІ)
-    xi=fxi(xl,zl,zi);               %РњР°СЃСЃРёРІ СЃСЂРµРґРЅРёС… РґРѕР»РµР№ Al РІ СЏС‡РµР№РєР°С… СЃРµС‚РєРё
-    ni=fxi(nl,zl,zi);               %РњР°СЃСЃРёРІ СЃСЂРµРґРЅРёС… РєРѕРЅС†РµРЅС‚СЂР°С†РёР№ РїСЂРёРјРµСЃРµР№ РІ СЏС‡РµР№РєР°С… СЃРµС‚РєРё
-    wi=fxi(wl,zl,zi);               %РњР°СЃСЃРёРІ СЃСЂРµРґРЅРёС… Р·РЅР°С‡РµРЅРёР№ РѕРїС‚РёС‡РµСЃРєРѕРіРѕ РїРѕС‚РµРЅС†РёР°Р»Р°
-    i1=find(zi<zl(1+r1),1,'last');     %РРЅРґРµРєСЃ РіСЂР°РЅРёС†С‹ РєР°РЅР°Р»Р° Рё Р»РµРІРѕРіРѕ СЂРµР·РµСЂРІСѓР°СЂР° (i1-Р°СЏ СЏС‡РµР№РєР° РїСЂРёРЅР°РґР»РµР¶РёС‚ РєР°РЅР°Р»Сѓ)
-    i2=find(zi>zl(end-r2),1);           %РРЅРґРµРєСЃ РіСЂР°РЅРёС†С‹ РєР°РЅР°Р»Р° Рё РїСЂР°РІРѕРіРѕ СЂРµР·РµСЂРІСѓР°СЂР° (i2-Р°СЏ СЏС‡РµР№РєР° РїСЂРёРЅР°РґР»РµР¶РёС‚ СЂРµР·РµСЂРІСѓР°СЂСѓ)
+    %Построение сеток
+    dz=zl(end)/(Nz-1);              %Шаг пространственной сетки
+    zi=linspace(0,zl(end),Nz);      %Пространственная сетка (границы интервалов)
+    xi=fxi(xl,zl,zi);               %Массив средних долей Al в ячейках сетки
+    ni=fxi(nl,zl,zi);               %Массив средних концентраций примесей в ячейках сетки
+    wi=fxi(wl,zl,zi);               %Массив средних значений оптического потенциала
+    i1=find(zi<zl(1+r1),1,'last');     %Индекс границы канала и левого резервуара (i1-ая ячейка принадлежит каналу)
+    i2=find(zi>zl(end-r2),1);           %Индекс границы канала и правого резервуара (i2-ая ячейка принадлежит резервуару)
     Tp=[Tp(1),Tp];
-    %Р’С‹С‡РёСЃР»РµРЅРёРµ РґРёС„С„СѓР·РёРё
+    %Вычисление диффузии
     xdi=dfs(Dl,tl,xi,dz,Nt);
     ndi=dfs(Dl,tl,ni,dz,Nt);
     wdi=dfs(Dl,tl,wi,dz,Nt);
     R = Rs + 25*exp(-qe/2/kb./Tp).*sqrt(tl);
-    %Р’С‹С‡РёСЃР»РµРЅРёРµ Р’РђРҐ
+    %Вычисление ВАХ
     Vs=zeros(length(V),length(tl));
     Js=zeros(length(V),length(tl));
     Ts=zeros(length(E),length(V),length(tl));
