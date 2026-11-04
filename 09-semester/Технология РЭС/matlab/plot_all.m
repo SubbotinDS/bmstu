@@ -3,6 +3,7 @@ clear; clc; close all;
 sets = { ...
     {'T223.mat',  'Default.mat',  'T423.mat'}, ...
     {'Al95.mat',  'Default.mat'}, ...
+    {'Al95_1.mat',  'Default.mat', 'Al95_2.mat'}, ...
     {'D1_1.mat',  'Default.mat',  'D1_3.mat'}, ...
     {'D2_1.mat',  'Default.mat',  'D2_3.mat'}, ...
     {'D3_1.mat',  'Default.mat',  'D3_3.mat'}, ...
@@ -16,7 +17,8 @@ sets = { ...
     {'Imin.mat',  'Default.mat',  'Imax.mat'}, ...
 };
 titles = {'¬ј’ –“ƒ при разных температурах', ...
-          '¬ј’ –“ƒ при разных дол€х алюмини€', ...
+          '¬ј’ –“ƒ при одинаковом изменении доли алюмини€', ...
+          '¬ј’ –“ƒ при противоположном изменении доли алюмини€', ...
           '¬ј’ –“ƒ при разной толщине квантовой €мы', ...
           '¬ј’ –“ƒ при разной толщине первого барьера', ...
           '¬ј’ –“ƒ при разной толщине второго барьера', ...
@@ -34,14 +36,13 @@ spacer_rows = [4, 8];
 %  акой период строить: 0 Ч исходный (первый столбец), 1 Ч следующий и т.д.
 period_s = 0;
 col = period_s + 1;
-
 for s = 1:numel(sets)
     files = sets{s};
     clr = lines(numel(files));
     figure('Color','w','Position',[200+40*s 200-40*s 780 540]);
     hold on; grid on; grid minor;
     
-    if s < 13
+    if s < 14
         sub_title = titles{s}(8:end);
         fprintf('======================================================\n');
         fprintf(' оэффициенты чувствительности%s\n', sub_title);
@@ -49,7 +50,6 @@ for s = 1:numel(sets)
         fprintf('======================================================\n');
         fprintf('»тоговый технологический разброс (min / nom / max)\n');
     end
-
     % ћассивы дл€ сохранени€ данных по всем файлам текущего набора
     V_ops = zeros(1, numel(files));
     I_ops = zeros(1, numel(files));
@@ -74,8 +74,8 @@ for s = 1:numel(sets)
         V = Vs(:, col);
         J = Js(:, col);
         
-        % --- –асчет тока в зависимости от набора (дл€ 12 и 13 наборов Ч разна€ меза) ---
-        if s == 12 || s == 13
+        % --- –асчет тока в зависимости от набора (дл€ 13 набора Ч разна€ меза) ---
+        if s == 13
             switch k
                 case 1
                     mesa_d = 9.5e-6;   % минимальна€ меза (Imin)
@@ -90,7 +90,7 @@ for s = 1:numel(sets)
         end
         % -----------------------------------------------------------------------
         
-        % --- ѕоиск рабочей точки: ближайший отсчет к напр€жению 0.655 ¬ ---
+        % --- ѕоиск рабочей точки: ближайший отсчет к напр€жению 0.175 ¬ ---
         target_V = 0.175;
         [~, op_idx] = min(abs(V - target_V));
         
@@ -112,19 +112,19 @@ for s = 1:numel(sets)
                     lbl = sprintf('x_{Al} = %.2g / %.2g', x1, x2);
                 end
             case 3
-                lbl = sprintf('d = %.4g нм', st.hst(6, 1));
-            case 4
-                lbl = sprintf('d = %.4g нм', st.hst(5, 1));
-            case 5
-                lbl = sprintf('d = %.4g нм', st.hst(7, 1));
-            case 6
-                d1 = st.hst(barrier_rows(1), 1);
-                d2 = st.hst(barrier_rows(2), 1);
-                if abs(d1 - d2) < 1e-9
-                    lbl = sprintf('d_{бар} = %.4g нм', d1);
+                x1 = st.hst(barrier_rows(1), 2);
+                x2 = st.hst(barrier_rows(2), 2);
+                if abs(x1 - x2) < 1e-9
+                    lbl = sprintf('x_{Al} = %.2g', x1);
                 else
-                    lbl = sprintf('d_{бар} = %.4g / %.4g нм', d1, d2);
+                    lbl = sprintf('x_{Al} = %.2g / %.2g', x1, x2);
                 end
+            case 4
+                lbl = sprintf('d = %.4g нм', st.hst(6, 1));
+            case 5
+                lbl = sprintf('d = %.4g нм', st.hst(5, 1));
+            case 6
+                lbl = sprintf('d = %.4g нм', st.hst(7, 1));
             case 7
                 d1 = st.hst(barrier_rows(1), 1);
                 d2 = st.hst(barrier_rows(2), 1);
@@ -134,17 +134,17 @@ for s = 1:numel(sets)
                     lbl = sprintf('d_{бар} = %.4g / %.4g нм', d1, d2);
                 end
             case 8
-                lbl = sprintf('d = %.4g нм', st.hst(4, 1));
-            case 9
-                lbl = sprintf('d = %.5g нм', st.hst(8, 1));
-            case 10
-                d1 = st.hst(spacer_rows(1), 1);
-                d2 = st.hst(spacer_rows(2), 1);
+                d1 = st.hst(barrier_rows(1), 1);
+                d2 = st.hst(barrier_rows(2), 1);
                 if abs(d1 - d2) < 1e-9
-                    lbl = sprintf('d_{сп} = %.4g нм', d1);
+                    lbl = sprintf('d_{бар} = %.4g нм', d1);
                 else
-                    lbl = sprintf('d_{сп} = %.4g / %.4g нм', d1, d2);
+                    lbl = sprintf('d_{бар} = %.4g / %.4g нм', d1, d2);
                 end
+            case 9
+                lbl = sprintf('d = %.4g нм', st.hst(4, 1));
+            case 10
+                lbl = sprintf('d = %.5g нм', st.hst(8, 1));
             case 11
                 d1 = st.hst(spacer_rows(1), 1);
                 d2 = st.hst(spacer_rows(2), 1);
@@ -154,6 +154,14 @@ for s = 1:numel(sets)
                     lbl = sprintf('d_{сп} = %.4g / %.4g нм', d1, d2);
                 end
             case 12
+                d1 = st.hst(spacer_rows(1), 1);
+                d2 = st.hst(spacer_rows(2), 1);
+                if abs(d1 - d2) < 1e-9
+                    lbl = sprintf('d_{сп} = %.4g нм', d1);
+                else
+                    lbl = sprintf('d_{сп} = %.4g / %.4g нм', d1, d2);
+                end
+            case 13
                 if k == 1
                     lbl = 'd_{меза} = 9.5 мкм';
                 elseif k == 2
@@ -161,7 +169,7 @@ for s = 1:numel(sets)
                 else
                     lbl = 'd_{меза} = 10.5 мкм';
                 end
-            case 13
+            case 14
                 if k == 1
                     lbl = 'I_{min}';
                 elseif k == 2
@@ -196,7 +204,6 @@ for s = 1:numel(sets)
             delta_max_exp = abs((I_plus - I_0) / I_0 * 100);
             delta_min_exp = abs((I_minus - I_0) / I_0 * 100);
             I_range_exp = abs(I_plus - I_minus);
-
             fprintf('I_- (223 K) = %.6g мј\n', I_minus);
             fprintf('I_0   (300 K) = %.6g мј\n', I_0);
             fprintf('I_+ (423 K) = %.6g мј\n', I_plus);
@@ -207,7 +214,6 @@ for s = 1:numel(sets)
             fprintf('delta_min (эксп) = %.2f %%\n', delta_min_exp);
             
         case 2
-            % ƒол€ алюмини€: только отклонение -5% (0.95)
             I_minus = I_ops(1); I_0 = I_ops(2);
             x_0 = st_all{2}.hst(barrier_rows(1), 2);
             dx = 0.05 * x_0;
@@ -215,9 +221,7 @@ for s = 1:numel(sets)
             K_minus = ((I_0 - I_minus) / I_0) * (x_0 / dx);
             delta_minus_tech = (I_minus - I_0) / I_0 * 100;
             
-            % ƒл€ алюмини€ I_minus - это максимальный ток (при 0.95), I_0 - минимальный (при 1.0)
             I_range_al = I_minus - I_0; 
-
             fprintf('I_- (x=0.95)  = %.6g мј\n', I_minus);
             fprintf('I_0 (x=1.00)  = %.6g мј\n', I_0);
             fprintf('I_- - I_0     = %.6g мј\n', I_range_al);
@@ -225,6 +229,19 @@ for s = 1:numel(sets)
             fprintf('delta_- (тех) = %+.2f %%\n', delta_minus_tech);
             
         case 3
+            I_1 = I_ops(1); I_0 = I_ops(2); I_2 = I_ops(3);
+            x_0 = st_all{2}.hst(barrier_rows(1), 2);
+            dx = 0.05 * x_0;
+            
+            K_1  = ((I_1 - I_0) / I_0) * (x_0 / dx);
+            K_2  = ((I_2 - I_0) / I_0) * (x_0 / dx);
+            fprintf('I_1 (0.95/1)  = %.6g мј\n', I_1);
+            fprintf('I_0 (номинал) = %.6g мј\n', I_0);
+            fprintf('I_2 (1/0.95)  = %.6g мј\n', I_2);
+            fprintf('K1 = %.4g\n', K_1);
+            fprintf('K2 = %.4g\n', K_2);
+            
+        case 4
             I_minus = I_ops(1); I_0 = I_ops(2); I_plus = I_ops(3);
             x_0 = st_all{2}.hst(6, 1);
             dx = 0.283;
@@ -234,27 +251,6 @@ for s = 1:numel(sets)
             delta_minus_tech = (I_minus - I_0) / I_0 * 100;
             delta_plus_tech  = (I_plus - I_0) / I_0 * 100;
             I_range = I_plus - I_minus;
-
-            fprintf('I_- (-1 слой)  = %.6g мј\n', I_minus);
-            fprintf('I_0 (номинал)  = %.6g мј\n', I_0);
-            fprintf('I_+ (+1 слой)  = %.6g мј\n', I_plus);
-            fprintf('I_+ - I_-     = %.6g мј\n', I_range);
-            fprintf('K- = %.4g\n', K_minus);
-            fprintf('K+ = %.4g\n', K_plus);
-            fprintf('delta_- (тех) = %+.2f %%\n', delta_minus_tech);
-            fprintf('delta_+ (тех) = %+.2f %%\n', delta_plus_tech);
-            
-        case 4
-            I_minus = I_ops(1); I_0 = I_ops(2); I_plus = I_ops(3);
-            x_0 = st_all{2}.hst(5, 1);
-            dx = 0.283;
-            
-            K_minus = ((I_0 - I_minus) / I_0) * (x_0 / dx);
-            K_plus  = ((I_plus - I_0) / I_0) * (x_0 / dx);
-            delta_minus_tech = (I_minus - I_0) / I_0 * 100;
-            delta_plus_tech  = (I_plus - I_0) / I_0 * 100;
-            I_range = I_plus - I_minus;
-
             fprintf('I_- (-1 слой)  = %.6g мј\n', I_minus);
             fprintf('I_0 (номинал)  = %.6g мј\n', I_0);
             fprintf('I_+ (+1 слой)  = %.6g мј\n', I_plus);
@@ -266,7 +262,7 @@ for s = 1:numel(sets)
             
         case 5
             I_minus = I_ops(1); I_0 = I_ops(2); I_plus = I_ops(3);
-            x_0 = st_all{2}.hst(7, 1);
+            x_0 = st_all{2}.hst(5, 1);
             dx = 0.283;
             
             K_minus = ((I_0 - I_minus) / I_0) * (x_0 / dx);
@@ -274,7 +270,6 @@ for s = 1:numel(sets)
             delta_minus_tech = (I_minus - I_0) / I_0 * 100;
             delta_plus_tech  = (I_plus - I_0) / I_0 * 100;
             I_range = I_plus - I_minus;
-
             fprintf('I_- (-1 слой)  = %.6g мј\n', I_minus);
             fprintf('I_0 (номинал)  = %.6g мј\n', I_0);
             fprintf('I_+ (+1 слой)  = %.6g мј\n', I_plus);
@@ -283,21 +278,20 @@ for s = 1:numel(sets)
             fprintf('K+ = %.4g\n', K_plus);
             fprintf('delta_- (тех) = %+.2f %%\n', delta_minus_tech);
             fprintf('delta_+ (тех) = %+.2f %%\n', delta_plus_tech);
-
+            
         case 6
             I_minus = I_ops(1); I_0 = I_ops(2); I_plus = I_ops(3);
-            x_0 = st_all{2}.hst(barrier_rows(1), 1);
-            dx = 0.283 * 2;
+            x_0 = st_all{2}.hst(7, 1);
+            dx = 0.283;
             
             K_minus = ((I_0 - I_minus) / I_0) * (x_0 / dx);
             K_plus  = ((I_plus - I_0) / I_0) * (x_0 / dx);
             delta_minus_tech = (I_minus - I_0) / I_0 * 100;
             delta_plus_tech  = (I_plus - I_0) / I_0 * 100;
             I_range = I_plus - I_minus;
-
-            fprintf('I_- (совм -)  = %.6g мј\n', I_minus);
-            fprintf('I_0 (номинал) = %.6g мј\n', I_0);
-            fprintf('I_+ (совм +)  = %.6g мј\n', I_plus);
+            fprintf('I_- (-1 слой)  = %.6g мј\n', I_minus);
+            fprintf('I_0 (номинал)  = %.6g мј\n', I_0);
+            fprintf('I_+ (+1 слой)  = %.6g мј\n', I_plus);
             fprintf('I_+ - I_-     = %.6g мј\n', I_range);
             fprintf('K- = %.4g\n', K_minus);
             fprintf('K+ = %.4g\n', K_plus);
@@ -314,7 +308,25 @@ for s = 1:numel(sets)
             delta_minus_tech = (I_minus - I_0) / I_0 * 100;
             delta_plus_tech  = (I_plus - I_0) / I_0 * 100;
             I_range = I_plus - I_minus;
-
+            fprintf('I_- (совм -)  = %.6g мј\n', I_minus);
+            fprintf('I_0 (номинал) = %.6g мј\n', I_0);
+            fprintf('I_+ (совм +)  = %.6g мј\n', I_plus);
+            fprintf('I_+ - I_-     = %.6g мј\n', I_range);
+            fprintf('K- = %.4g\n', K_minus);
+            fprintf('K+ = %.4g\n', K_plus);
+            fprintf('delta_- (тех) = %+.2f %%\n', delta_minus_tech);
+            fprintf('delta_+ (тех) = %+.2f %%\n', delta_plus_tech);
+            
+        case 8
+            I_minus = I_ops(1); I_0 = I_ops(2); I_plus = I_ops(3);
+            x_0 = st_all{2}.hst(barrier_rows(1), 1);
+            dx = 0.283 * 2;
+            
+            K_minus = ((I_0 - I_minus) / I_0) * (x_0 / dx);
+            K_plus  = ((I_plus - I_0) / I_0) * (x_0 / dx);
+            delta_minus_tech = (I_minus - I_0) / I_0 * 100;
+            delta_plus_tech  = (I_plus - I_0) / I_0 * 100;
+            I_range = I_plus - I_minus;
             fprintf('I_- (разн -/+) = %.6g мј\n', I_minus);
             fprintf('I_0 (номинал)  = %.6g мј\n', I_0);
             fprintf('I_+ (разн +/-) = %.6g мј\n', I_plus);
@@ -324,7 +336,7 @@ for s = 1:numel(sets)
             fprintf('delta_- (тех) = %+.2f %%\n', delta_minus_tech);
             fprintf('delta_+ (тех) = %+.2f %%\n', delta_plus_tech);
             
-        case 8
+        case 9
             I_minus = I_ops(1); I_0 = I_ops(2); I_plus = I_ops(3);
             x_0 = st_all{2}.hst(4, 1);
             dx = 0.283;
@@ -334,27 +346,6 @@ for s = 1:numel(sets)
             delta_minus_tech = (I_minus - I_0) / I_0 * 100;
             delta_plus_tech  = (I_plus - I_0) / I_0 * 100;
             I_range = I_plus - I_minus;
-
-            fprintf('I_- (-1 слой)  = %.6g мј\n', I_minus);
-            fprintf('I_0 (номинал)  = %.6g мј\n', I_0);
-            fprintf('I_+ (+1 слой)  = %.6g мј\n', I_plus);
-            fprintf('I_+ - I_-     = %.6g мј\n', I_range);
-            fprintf('K- = %.4g\n', K_minus);
-            fprintf('K+ = %.4g\n', K_plus);
-            fprintf('delta_- (тех) = %+.2f %%\n', delta_minus_tech);
-            fprintf('delta_+ (тех) = %+.2f %%\n', delta_plus_tech);
-            
-        case 9
-            I_minus = I_ops(1); I_0 = I_ops(2); I_plus = I_ops(3);
-            x_0 = st_all{2}.hst(8, 1);
-            dx = 0.283;
-            
-            K_minus = ((I_0 - I_minus) / I_0) * (x_0 / dx);
-            K_plus  = ((I_plus - I_0) / I_0) * (x_0 / dx);
-            delta_minus_tech = (I_minus - I_0) / I_0 * 100;
-            delta_plus_tech  = (I_plus - I_0) / I_0 * 100;
-            I_range = I_plus - I_minus;
-
             fprintf('I_- (-1 слой)  = %.6g мј\n', I_minus);
             fprintf('I_0 (номинал)  = %.6g мј\n', I_0);
             fprintf('I_+ (+1 слой)  = %.6g мј\n', I_plus);
@@ -366,18 +357,17 @@ for s = 1:numel(sets)
             
         case 10
             I_minus = I_ops(1); I_0 = I_ops(2); I_plus = I_ops(3);
-            x_0 = st_all{2}.hst(spacer_rows(1), 1);
-            dx = 0.283 * 2;
+            x_0 = st_all{2}.hst(8, 1);
+            dx = 0.283;
             
             K_minus = ((I_0 - I_minus) / I_0) * (x_0 / dx);
             K_plus  = ((I_plus - I_0) / I_0) * (x_0 / dx);
             delta_minus_tech = (I_minus - I_0) / I_0 * 100;
             delta_plus_tech  = (I_plus - I_0) / I_0 * 100;
             I_range = I_plus - I_minus;
-
-            fprintf('I_- (совм -)  = %.6g мј\n', I_minus);
-            fprintf('I_0 (номинал) = %.6g мј\n', I_0);
-            fprintf('I_+ (совм +)  = %.6g мј\n', I_plus);
+            fprintf('I_- (-1 слой)  = %.6g мј\n', I_minus);
+            fprintf('I_0 (номинал)  = %.6g мј\n', I_0);
+            fprintf('I_+ (+1 слой)  = %.6g мј\n', I_plus);
             fprintf('I_+ - I_-     = %.6g мј\n', I_range);
             fprintf('K- = %.4g\n', K_minus);
             fprintf('K+ = %.4g\n', K_plus);
@@ -394,7 +384,25 @@ for s = 1:numel(sets)
             delta_minus_tech = (I_minus - I_0) / I_0 * 100;
             delta_plus_tech  = (I_plus - I_0) / I_0 * 100;
             I_range = I_plus - I_minus;
-
+            fprintf('I_- (совм -)  = %.6g мј\n', I_minus);
+            fprintf('I_0 (номинал) = %.6g мј\n', I_0);
+            fprintf('I_+ (совм +)  = %.6g мј\n', I_plus);
+            fprintf('I_+ - I_-     = %.6g мј\n', I_range);
+            fprintf('K- = %.4g\n', K_minus);
+            fprintf('K+ = %.4g\n', K_plus);
+            fprintf('delta_- (тех) = %+.2f %%\n', delta_minus_tech);
+            fprintf('delta_+ (тех) = %+.2f %%\n', delta_plus_tech);
+            
+        case 12
+            I_minus = I_ops(1); I_0 = I_ops(2); I_plus = I_ops(3);
+            x_0 = st_all{2}.hst(spacer_rows(1), 1);
+            dx = 0.283 * 2;
+            
+            K_minus = ((I_0 - I_minus) / I_0) * (x_0 / dx);
+            K_plus  = ((I_plus - I_0) / I_0) * (x_0 / dx);
+            delta_minus_tech = (I_minus - I_0) / I_0 * 100;
+            delta_plus_tech  = (I_plus - I_0) / I_0 * 100;
+            I_range = I_plus - I_minus;
             fprintf('I_- (разн -/+) = %.6g мј\n', I_minus);
             fprintf('I_0 (номинал)  = %.6g мј\n', I_0);
             fprintf('I_+ (разн +/-) = %.6g мј\n', I_plus);
@@ -404,7 +412,7 @@ for s = 1:numel(sets)
             fprintf('delta_- (тех) = %+.2f %%\n', delta_minus_tech);
             fprintf('delta_+ (тех) = %+.2f %%\n', delta_plus_tech);
             
-        case 12
+        case 13
             I_minus = I_ops(1); I_0 = I_ops(2); I_plus = I_ops(3);
             x_0 = 10.0;
             dx = 0.05 * x_0;
@@ -414,7 +422,6 @@ for s = 1:numel(sets)
             delta_minus_tech = (I_minus - I_0) / I_0 * 100;
             delta_plus_tech  = (I_plus - I_0) / I_0 * 100;
             I_range = I_plus - I_minus;
-
             fprintf('I_- (9.5 мкм)  = %.6g мј\n', I_minus);
             fprintf('I_0 (10 мкм)   = %.6g мј\n', I_0);
             fprintf('I_+ (10.5 мкм) = %.6g мј\n', I_plus);
@@ -424,13 +431,12 @@ for s = 1:numel(sets)
             fprintf('delta_- (тех) = %+.2f %%\n', delta_minus_tech);
             fprintf('delta_+ (тех) = %+.2f %%\n', delta_plus_tech);
             
-        case 13
+        case 14
             I_min_op = I_ops(1); I_0_tech = I_ops(2); I_max_op = I_ops(3);
             I_tech = I_max_op - I_min_op;
             
             delta_max_tech = (I_max_op - I_0_tech) / I_0_tech * 100;
             delta_min_tech = (I_min_op - I_0_tech) / I_0_tech * 100;
-
             fprintf('I_min (тех) = %.6g мј\n', I_min_op);
             fprintf('I_0 (тех)   = %.6g мј\n', I_0_tech);
             fprintf('I_max (тех) = %.6g мј\n', I_max_op);
